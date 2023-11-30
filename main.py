@@ -2,3 +2,4 @@
 """RL"""
 print(1+1)
 print("DOTA 2")
+print("solar system")
