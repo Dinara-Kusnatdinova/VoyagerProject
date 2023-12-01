@@ -1,6 +1,4 @@
 import math
-from random import choice
-
 import pygame
 
 
@@ -17,46 +15,71 @@ WHITE = 0xFFFFFF
 GREY = 0x7D7D7D
 GAME_COLORS = [RED, BLUE, YELLOW, GREEN, MAGENTA, CYAN]
 
-WIDTH = 800
-HEIGHT = 600
+WIDTH, HEIGHT = 1400, 700
+G = 6.6743 / 10**11
+M_SUN = 3.955 * 10**30
+R_SELF_SUN = 695.5 * 10**6
+R_CIRCULATION_EARTH = 149.6 * 10**11
+R_OWN_EARTH = 6.371 * 10**6
 
 
 class Planet:
-    def __init__(self, screen, x=40, y=450):
-        """ Конструктор класса ball
-
+    def __init__(self, screen, x=40, y=450, vx=0, vy=0, ax=0, ay=0,
+                 r_own=R_OWN_EARTH, r_circulation=R_CIRCULATION_EARTH, color=BLACK):
+        """ Конструктор класса Planet
         Args:
-        x - начальное положение мяча по горизонтали
-        y - начальное положение мяча по вертикали
+        x - начальное положение планеты по горизонтали
+        y - начальное положение планеты по вертикали
+        vx - начальная скорость планеты по горизонтали
+        vy - начальная скорость планеты по вертикали
+        ax - начальное ускорение планеты по горизонтали
+        ay - начальное ускорение планеты по вертикали
+        r_own - радиус планеты
+        r_circulation - радиус обращения планеты вокруг звезды
+        color - цвет планеты
+
         """
         self.screen = screen
-        self.x = x
-        self.y = y
-        self.r = 10
-        self.vx = 0
-        self.vy = 0
-        self.color = choice(GAME_COLORS)
-        self.live = 30
+        self.x, self.y = x, y
+        self.r_own = r_own
+        self.color, self.r_circulation = color, r_circulation
+        self.vx, self.vy = vx, vy
+        self.ax, self.ay = ax, ay
+
+    def set_acceleration(self):
+        """Задаёт ускорение планеты.
+
+        Метод рассчитывает ускорение планеты с учётом сил, действующих на тело.
+        """
+        # NEED TO BE FIXED
+        pass
+
+    def change_speed(self):
+        """Меняет скорость планеты по прошествии единицы времени.
+
+        Метод описывает изменение скорости планеты за один кадр перерисовки. То есть, обновляет значения
+        self.vx и self.vy с учетом ускорений self.ax и self.ay.
+        """
+        self.vx += self.ax
+        self.vy -= self.ay
 
     def move(self):
-        """Переместить мяч по прошествии единицы времени.
+        """Перемещает планету по прошествии единицы времени.
 
-        Метод описывает перемещение мяча за один кадр перерисовки. То есть, обновляет значения
-        self.x и self.y с учетом скоростей self.vx и self.vy, силы гравитации, действующей на мяч,
-        и стен по краям окна (размер окна 800х600).
+        Метод описывает перемещение планеты за один кадр перерисовки. То есть, обновляет значения
+        self.x и self.y с учетом скоростей self.vx и self.vy.
         """
-        # FIXME
         self.x += self.vx
         self.y -= self.vy
 
     def draw(self):
-        pygame.draw.circle(self.screen, self.color,(self.x, self.y), self.r)
+        pygame.draw.circle(self.screen, self.color,(self.x, self.y), self.r_own)
 
 
 class Voyager:
-    def __init__(self, screen):
+    def __init__(self, screen, x=40, y=450, color=BLACK):
         self.screen = screen
-        self.color = GREY
+        self.color = color
 
     def event1(self, event):
         pass
