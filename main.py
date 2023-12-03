@@ -1,6 +1,6 @@
 import pygame
 from ctypes import windll
-# import math
+import math
 
 
 FPS = 30
@@ -16,61 +16,70 @@ SPACE = (25, 25, 62)
 # Размер окна
 WIDTH, HEIGHT = windll.user32.GetSystemMetrics(0) - 10, windll.user32.GetSystemMetrics(1) - 80
 
-# Физические константы
+# Физические константы в СИ
 G = 6.6743 / 10**11
 M_SUN = 3.955 * 10**30
 R_OWN_SUN = 696.34 * 10**6
 M_EARTH = 5.9742 * 10**24
 R_CIRCULATION_EARTH = 1.495978707 * 10**11
 R_OWN_EARTH = 6.371 * 10**6
-
-# Масштабные коэффициенты (могут меняться для каждого тела):
-# увеличение линейного размера тел, увеличение расстояния между телами
-K_OWN, K_CIRCULATION = 1 / 10**6 / 1.25, 1 / 10**9 / 3.5
+V_ORBITAL_EARTH = 3 * 10**4
+V_OWN_ROTATION_EARTH = 465.1013  # на экваторе
+# Масштабные коэффициенты (могут меняться для каждого тела); коэффициент увелечения скорости:
+# увеличение линейного размера тел, увеличение расстояния между телами; коэффициент увелечения скорости
+K_OWN, K_CIRCULATION, K_SPEED = 1 / 10**6 / 1.25, 1 / 10**10 / 1.5, 10**5
+# Радиус удаления от Солнца. Нужен, чтобы отдалить планеты от звезды, противодействует слипанию
+R_START = 8 * 10**11
 
 
 class BaseBody:
     """ Класс BaseBody
     описывает тела, движущиеся в системе звезды по различным орбитам.
     """
-    def __init__(self, screen, x=40, y=HEIGHT/2 * 10**9 * 3.5, vx=0, vy=0, ax=0, ay=0, m=M_EARTH,
+    def __init__(self, screen, v=V_ORBITAL_EARTH, angle=0.0, m=M_EARTH,
                  r_own=R_OWN_EARTH, r_circulation=R_CIRCULATION_EARTH, color=BLUE,
-                 k_own=K_OWN, k_circulation=K_CIRCULATION):
+                 k_own=K_OWN, k_circulation=K_CIRCULATION, k_speed=K_SPEED):
         """ Конструктор класса BaseBody
         Args:
-        x - начальное положение тела по горизонтали
-        y - начальное положение тела по вертикали
-        vx - начальная скорость тела по горизонтали
-        vy - начальная скорость тела по вертикали
-        ax - начальное ускорение тела по горизонтали
-        ay - начальное ускорение тела по вертикали
+        v - полная орбитальная скорость объекта
+        angle - начальный угол (рисунок)
         m - масса тела
         r_own - радиус тела
         r_circulation - радиус орбиты
         color - цвет тела
         k_own - коэффициент увеличения линейных размеров тела
         k_circulation - коэффициент увеличения расстояния от тела до звезды
+        k_speed - коэффициент увеличения скорости тела
+        x - начальное положение тела по горизонтали
+        y - начальное положение тела по вертикали
+        vx - начальная скорость тела по горизонтали
+        vy - начальная скорость тела по вертикали
+        ax - начальное ускорение тела по горизонтали
+        ay - начальное ускорение тела по вертикали
         """
         self.screen = screen
-        self.r_own, self.k_own, self.k_circulation = r_own, k_own, k_circulation
+        self.r_own, self.k_own, self.k_circulation, self.k_speed = r_own, k_own, k_circulation, k_speed
         self.color, self.r_circulation = color, r_circulation
-        self.vx, self.vy = vx, vy
-        self.ax, self.ay, self.m = ax, ay, m
+        self.v = v * self.k_speed
+        self.vx, self.vy = -1 * v * math.sin(angle) * self.k_speed, v * math.cos(angle) * self.k_speed
+        self.m = m
 
-        self.x, self.y = self.r_circulation, y
-        # на данном этапе координаты задаются так, потом изменим
+        self.x, self.y = Sun.x + self.r_circulation * math.cos(angle), Sun.y + self.r_circulation * math.sin(angle)
+        self.ax, self.ay = 0, 0
+        self.set_acceleration()
 
     def set_acceleration(self):
         """Задаёт ускорение тела.
 
         Метод рассчитывает ускорение тела с учётом сил, действующих на тело.
         """
-        # NEED TO BE FIXED
-        # Скорее всего потребует отдельной реализации в каждом наследуемом классе.
-        # Тем не менее основные вычисления могут быть сделаны здесь:
-        # подсчёт сил без проекций на оси x, y. Если получится спроецировать,
-        # то данный метод будет наследоваться в зависимых классах, без дополнительной реализации в них.
-        pass
+        # Требует частичной отдельной реализации в каждом наследуемом классе.
+        # Тем не менее часть вычислений может быть сделана здесь:
+        # рассчёт взаимодействия со звездой
+        a_sun_perpendicular = self.v ** 2 / self.r_circulation
+        self.angle = math.atan2(self.y - Sun.y, self.x - Sun.x)
+        self.ax = -1 * a_sun_perpendicular * math.cos(self.angle)
+        self.ay = -1 * a_sun_perpendicular * math.sin(self.angle)
 
     def change_speed(self):
         """Меняет скорость тела по прошествии единицы времени.
@@ -78,8 +87,9 @@ class BaseBody:
         Метод описывает изменение скорости тела за один кадр перерисовки. То есть, обновляет значения
         self.vx и self.vy с учетом ускорений self.ax и self.ay.
         """
+        self.set_acceleration()
         self.vx += self.ax
-        self.vy -= self.ay
+        self.vy += self.ay
 
     def move(self):
         """Перемещает тело по прошествии единицы времени.
@@ -87,15 +97,17 @@ class BaseBody:
         Метод описывает перемещение тела за один кадр перерисовки. То есть, обновляет значения
         self.x и self.y с учетом скоростей self.vx и self.vy.
         """
+        self.change_speed()
         self.x += self.vx
-        self.y -= self.vy
+        self.y += self.vy
 
     def draw(self):
         """Рисует тело по прошествии единицы времени.
 
         Метод отрисовки тела. Обновляет положение тела на экране с учетом self.x и self.y.
         """
-        pygame.draw.circle(self.screen, center=(self.x * self.k_circulation, self.y * self.k_circulation),
+        pygame.draw.circle(self.screen, center=((R_START * math.cos(self.angle) + self.x) * self.k_circulation,
+                                                (R_START * math.sin(self.angle) + self.y) * self.k_circulation),
                            radius=self.r_own * self.k_own, color=self.color)
 
 
@@ -105,7 +117,7 @@ class Planet(BaseBody):
     """
     def set_acceleration(self):
         super().set_acceleration()
-        # NEED TO BE FIXED
+        pass
 
 
 class Voyager(BaseBody):
@@ -118,8 +130,8 @@ class Voyager(BaseBody):
 
 
 class Star:
-    def __init__(self, screen, x=0, y=HEIGHT/2, r_own=R_OWN_SUN, color=YELLOW,
-                 m=M_SUN, k_own=K_OWN, k_circulation=K_CIRCULATION):
+    def __init__(self, screen, x=WIDTH/2 / K_CIRCULATION, y=HEIGHT/2 / K_CIRCULATION, r_own=R_OWN_SUN,
+                 color=YELLOW, m=M_SUN, k_own=K_OWN, k_circulation=K_CIRCULATION):
         """ Конструктор класса Star
         Args:
         x - начальное положение тела по горизонтали
@@ -138,8 +150,8 @@ class Star:
     def draw(self):
         """ Метод отрисовки звезды. Обновляет положение тела на экране с учетом self.x и self.y.
         """
-        pygame.draw.circle(self.screen, center=(self.x, self.y), radius=self.r_own * self.k_own,
-                           color=self.color)
+        pygame.draw.circle(self.screen, center=(self.x * K_CIRCULATION, self.y * K_CIRCULATION),
+                           radius=self.r_own * self.k_own, color=self.color)
 
 
 # Инициализация окна, синхронизация со временем
@@ -149,18 +161,25 @@ screen = pygame.display.set_mode((WIDTH, HEIGHT))
 clock = pygame.time.Clock()
 
 # Инициализация Солнца
-Sun = Star(screen, k_own=K_OWN / 5)
+Sun = Star(screen, k_own=K_OWN / 15)
 # Инициализация планет солнечной системы
-Mercury = Planet(screen, m=3.3 * 10**23, r_own=2.4397 * 10**6, r_circulation=5.791 * 10**10, k_own=K_OWN * 1.25)
-Venus = Planet(screen, m=4.87 * 10**24, r_own=6.0518 * 10**6, r_circulation=1.082 * 10**11)
+Mercury = Planet(screen, m=3.3 * 10**23, r_own=2.4397 * 10**6, r_circulation=5.791 * 10**10,
+                 k_own=K_OWN * 1.25, v=4.7 * 10**4, k_speed=K_SPEED / 2, angle=1.4)
+Venus = Planet(screen, m=4.87 * 10**24, r_own=6.0518 * 10**6, r_circulation=1.082 * 10**11,
+               v=3.5 * 10**4, k_speed=K_SPEED / 1.5, angle=1.2)
 Earth = Planet(screen)
-Mars = Planet(screen, m=6.39 * 10**23, r_own=3.3895 * 10**6, r_circulation=2.279 * 10**11, k_own=K_OWN * 1.25)
-Jupiter = Planet(screen, m=1.898 * 10**27, r_own=69.911 * 10**6, r_circulation=7.785 * 10**11, k_own=K_OWN/4)
-Saturn = Planet(screen, m=5.683 * 10**26, r_own=58.232 * 10**6, r_circulation=1.434 * 10**12, k_own=K_OWN/3.75)
-Uranus = Planet(screen, m=8.681 * 10**25, r_own=25.362 * 10**6, r_circulation=2.871 * 10**12, k_own=K_OWN/3.25)
-Neptune = Planet(screen, m=1.024 * 10**26, r_own=24.622 * 10**6, r_circulation=4.495 * 10**12, k_own=K_OWN/3.25)
+Mars = Planet(screen, m=6.39 * 10**23, r_own=3.3895 * 10**6, r_circulation=2.279 * 10**11,
+              k_own=K_OWN * 1.25, v=2.4 * 10**4, k_speed=K_SPEED * 1.5, angle=1.0)
+Jupiter = Planet(screen, m=1.898 * 10**27, r_own=69.911 * 10**6, r_circulation=7.785 * 10**11,
+                 k_own=K_OWN/4, v=1.3 * 10**4, k_speed=K_SPEED * 5, angle=0.8)
+Saturn = Planet(screen, m=5.683 * 10**26, r_own=58.232 * 10**6, r_circulation=1.434 * 10**12,
+                k_own=K_OWN/3.75, v=9.7 * 10**3, k_speed=K_SPEED * 6.5, angle=0.6)
+Uranus = Planet(screen, m=8.681 * 10**25, r_own=25.362 * 10**6, r_circulation=2.871 * 10**12,
+                k_own=K_OWN/3.25, v=6.8 * 10**3, k_speed=K_SPEED * 12, angle=0.4)
+Neptune = Planet(screen, m=1.024 * 10**26, r_own=24.622 * 10**6, r_circulation=4.495 * 10**12,
+                 k_own=K_OWN/3.25, v=5.4 * 10**3, k_speed=K_SPEED * 12.5, angle=0.2)
 # Инициализация объекта, совершающего гравитационный манёвр
-voyager = Voyager(screen, color=GREEN, y=(HEIGHT/2 + 5) * 10**9 * 3.5, r_own=100, k_own=K_OWN * 10**4 * 5)
+voyager = Voyager(screen, color=WHITE, angle=0, r_own=100, k_own=K_OWN * 10**4 * 4)
 
 # Цикл игры, прекращается при нажатии кнопки выхода
 finished = False
@@ -174,6 +193,10 @@ while not finished:
     voyager.draw()
     pygame.display.update()
 
+    # Движение тел
+    (Mercury.move(), Venus.move(), Earth.move(), Mars.move(),
+     Jupiter.move(), Saturn.move(), Uranus.move(), Neptune.move())
+    voyager.move()
     # Синхронизация со временем
     clock.tick(FPS)
     # Обработка событий игры
