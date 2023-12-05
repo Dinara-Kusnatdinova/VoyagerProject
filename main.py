@@ -38,7 +38,7 @@ class BaseBody:
     """
     def __init__(self, screen, angle=0.0, m=M_EARTH,
                  r_own=R_OWN_EARTH, r_circulation=R_CIRCULATION_EARTH, color=BLUE,
-                 k_own=K_OWN, k_circulation=K_CIRCULATION, time = TIME):
+                 k_own=K_OWN, k_circulation=K_CIRCULATION, time = TIME, v = 0):
         """ Конструктор класса BaseBody
         Args:
         v - полная орбитальная скорость объекта
@@ -60,13 +60,15 @@ class BaseBody:
         self.screen = screen
         self.r_own, self.k_own, self.k_circulation, self.time = r_own, k_own, k_circulation, time
         self.color, self.r_circulation = color, r_circulation
-        v = math.sqrt(G*M_SUN/r_circulation)
+        if v == 0:
+            v = math.sqrt(G * M_SUN / r_circulation)
         self.vx, self.vy = -1 * v * math.sin(angle), v * math.cos(angle)
         self.m = m
         self.x, self.y = Sun.x + self.r_circulation * math.cos(angle), Sun.y + self.r_circulation * math.sin(angle)
         self.ax, self.ay = 0, 0
         self.acceleration()
-        print(v, G, M_SUN, r_circulation)
+        self.tick = 0 # переменная для подсчёта количество выполненных циклов и перевод их в дни и годы
+
     def acceleration(self):
         a_sun_perpendicular = G * M_SUN / ((self.x - Sun.x) ** 2 + (self.y - Sun.y) ** 2)
         self.angle = math.atan2(self.y - Sun.y, self.x - Sun.x)
@@ -125,12 +127,38 @@ class Voyager(BaseBody):
         self.angle = math.atan2(self.y - Sun.y, self.x - Sun.x)
         self.ax = -1 * a_sun_perpendicular * math.cos(self.angle)
         self.ay = -1 * a_sun_perpendicular * math.sin(self.angle)
+
     def move(self):
         self.acceleration()
         self.vx -= self.ax * self.time
         self.vy -= self.ay * self.time
         self.x -= self.vx * self.time
         self.y -= self.vy * self.time
+
+    def draw_information(self):
+        self.tick += 1
+        year = int((self.tick * TIME) // (365.25 * 86400))
+        day = ((self.tick * TIME) // 86400) % 365
+        f1 = pygame.font.Font(None, 36)
+        if year >= 5:
+            text1 = f1.render('прошло ' + str(year) + ' лет ' + str(day) + ' дней',
+                              1, (255, 255, 255))
+        elif year > 1:
+            text1 = f1.render('прошло ' + str(year) + ' года ' + str(day) + ' дней',
+                              1, (255, 255, 255))
+        else:
+            text1 = f1.render('прошёл ' + str(year) + ' год ' + str(day) + ' дней',
+                              1, (255, 255, 255))
+        text2 = f1.render('скорость Вояджера ' + str(round(math.sqrt(self.vx**2 + self.vy**2) / 1000, 2)) + ' км/с',
+                          1, (255, 255, 255))
+        text3 = f1.render('расстояние от Вояджера до Солнца ' +
+                          str(round(math.sqrt((self.x - Sun.x) ** 2 +
+                                        (self.y - Sun.y) ** 2) / R_CIRCULATION_EARTH, 2)) + ' а.е.',
+                          1, (255, 255, 255))
+        screen.blit(text1, (15, 15))
+        screen.blit(text2, (15, 50))
+        screen.blit(text3, (15, 85))
+
 
 class Star:
     global Voyager_track_X, Voyager_track_Y
@@ -221,8 +249,7 @@ Neptune = Planet(screen, m=1.024 * 10**26, r_own=24.622 * 10**6, r_circulation=3
 # список из всех планет
 Planets = [Mercury, Venus, Earth, Mars, Jupiter, Saturn, Uranus, Neptune]
 # Инициализация объекта, совершающего гравитационный манёвр
-voyager = Voyager(screen, color=WHITE, angle=0, r_own=100, k_own=K_OWN * 10**4 * 4)
-tick = 0 # переменная для подсчёта количество выполненных циклов и перевод их в дни и годы
+voyager = Voyager(screen, color=WHITE, angle=0, r_own=100, k_own=K_OWN * 10**4 * 4, v = 20000)
 # Цикл игры, прекращается при нажатии кнопки выхода
 
 Voyager_track_X = []
@@ -239,7 +266,8 @@ while not finished:
     Sun.draw()
     (Mercury.draw(), Venus.draw(), Earth.draw(), Mars.draw(),
      Jupiter.draw(), Saturn.draw(), Uranus.draw(), Neptune.draw())
-    voyager.draw(),
+    voyager.draw()
+    voyager.draw_information()
     # Запись трека вояджера и его отрисовка
     voyager.Voyager_track_write()
     voyager.Voyager_track_draw()
@@ -250,32 +278,18 @@ while not finished:
     voyager.move()
     # Синхронизация со временем
     clock.tick(FPS)
+
     # Обработка событий игры
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             finished = True
         #if event.type == pygame.KEYDOWN:
             # Sun.change_x_y()
-    tick += 1
-    year = int((tick * TIME)//(365.25 * 86400))
-    day = ((tick * TIME)//86400) % 365
-    f1 = pygame.font.Font(None, 36)
-    if year >= 5:
-        text1 = f1.render('прошло ' + str(year) + ' лет ' + str(day) + ' дней',
-                          1, (255, 255, 255))
-    elif year > 1:
-        text1 = f1.render('прошло ' + str(year) + ' года ' + str(day) + ' дней',
-                          1, (255, 255, 255))
-    else:
-        text1 = f1.render('прошёл ' + str(year) + ' год ' + str(day) + ' дней',
-                          1, (255, 255, 255))
-    screen.blit(text1, (10, 50))
-    pygame.display.update()
 
     keys = pygame.key.get_pressed()
     if keys[pygame.K_d] or keys[pygame.K_a] or keys[pygame.K_w] or keys[pygame.K_s]:
         Sun.move_camera(event)
 
-
+    pygame.display.update()
 
 pygame.quit()
