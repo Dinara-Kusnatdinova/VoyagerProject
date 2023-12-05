@@ -30,7 +30,7 @@ V_OWN_ROTATION_EARTH = 465.1013  # на экваторе
 K_OWN, K_CIRCULATION, K_SPEED = 1 / 10**6 / 2, 1 / 10**10/0.3, 10**5
 # Радиус удаления от Солнца. Нужен, чтобы отдалить планеты от звезды, противодействует слипанию
 R_START = 0 * 10**11
-
+TIME = 10**5
 
 class BaseBody:
     """ Класс BaseBody
@@ -38,7 +38,7 @@ class BaseBody:
     """
     def __init__(self, screen, v=V_ORBITAL_EARTH, angle=0.0, m=M_EARTH,
                  r_own=R_OWN_EARTH, r_circulation=R_CIRCULATION_EARTH, color=BLUE,
-                 k_own=K_OWN, k_circulation=K_CIRCULATION, k_speed=K_SPEED):
+                 k_own=K_OWN, k_circulation=K_CIRCULATION, time = TIME):
         """ Конструктор класса BaseBody
         Args:
         v - полная орбитальная скорость объекта
@@ -58,39 +58,14 @@ class BaseBody:
         ay - начальное ускорение тела по вертикали
         """
         self.screen = screen
-        self.r_own, self.k_own, self.k_circulation, self.k_speed = r_own, k_own, k_circulation, k_speed
+        self.r_own, self.k_own, self.k_circulation, self.time = r_own, k_own, k_circulation, time
         self.color, self.r_circulation = color, r_circulation
-        self.v0 = v
-        self.v = v * self.k_speed
-        self.vx, self.vy = -1 * v * math.sin(angle) * self.k_speed, v * math.cos(angle) * self.k_speed
+        self.v = v
+        self.vx, self.vy = -1 * v * math.sin(angle), v * math.cos(angle)
         self.m = m
-
         self.x, self.y = Sun.x + self.r_circulation * math.cos(angle), Sun.y + self.r_circulation * math.sin(angle)
         self.ax, self.ay = 0, 0
-        self.set_acceleration()
-
-    def set_acceleration(self):
-        """Задаёт ускорение тела.
-
-        Метод рассчитывает ускорение тела с учётом сил, действующих на тело.
-        """
-        # Требует частичной отдельной реализации в каждом наследуемом классе.
-        # Тем не менее часть вычислений может быть сделана здесь:
-        # рассчёт взаимодействия со звездой
-        a_sun_perpendicular = self.v ** 2 / self.r_circulation
-        self.angle = math.atan2(self.y - Sun.y, self.x - Sun.x)
-        self.ax = -1 * a_sun_perpendicular * math.cos(self.angle)
-        self.ay = -1 * a_sun_perpendicular * math.sin(self.angle)
-
-    def change_speed(self):
-        """Меняет скорость тела по прошествии единицы времени.
-
-        Метод описывает изменение скорости тела за один кадр перерисовки. То есть, обновляет значения
-        self.vx и self.vy с учетом ускорений self.ax и self.ay.
-        """
-        self.set_acceleration()
-        self.vx -= self.ax
-        self.vy -= self.ay
+        self.move()
 
     def move(self):
         """Перемещает тело по прошествии единицы времени.
@@ -98,9 +73,14 @@ class BaseBody:
         Метод описывает перемещение тела за один кадр перерисовки. То есть, обновляет значения
         self.x и self.y с учетом скоростей self.vx и self.vy.
         """
-        self.change_speed()
-        self.x -= self.vx
-        self.y -= self.vy
+        a_sun_perpendicular = self.v ** 2 / self.r_circulation
+        self.angle = math.atan2(self.y - Sun.y, self.x - Sun.x)
+        self.ax = -1 * a_sun_perpendicular * math.cos(self.angle)
+        self.ay = -1 * a_sun_perpendicular * math.sin(self.angle)
+        self.vx -= self.ax * self.time
+        self.vy -= self.ay * self.time
+        self.x -= self.vx * self.time
+        self.y -= self.vy * self.time
 
     def draw(self):
         """Рисует тело по прошествии единицы времени.
@@ -124,8 +104,16 @@ class Voyager(BaseBody):
     """ Класс Voyager
     описывает тело, совершающее гравитационный манёвр.
     """
-    def set_acceleration(self):
-        super().set_acceleration()
+    def move(self):
+        a_sun_perpendicular = G * M_SUN / ((self.x - Sun.x) ** 2 + (self.y - Sun.y) ** 2)
+        self.angle = math.atan2(self.y - Sun.y, self.x - Sun.x)
+        self.ax = -1 * a_sun_perpendicular * math.cos(self.angle)
+        self.ay = -1 * a_sun_perpendicular * math.sin(self.angle)
+        self.vx -= self.ax * self.time
+        self.vy -= self.ay * self.time
+        self.x -= self.vx * self.time
+        self.y -= self.vy * self.time
+
         # NEED TO BE FIXED
 
 
@@ -187,20 +175,20 @@ clock = pygame.time.Clock()
 Sun = Star(screen, k_own=K_OWN / 15)
 # Инициализация планет солнечной системы
 Mercury = Planet(screen, m=3.3 * 10**23, r_own=2.4397 * 10**6, r_circulation=0.387*R_CIRCULATION_EARTH,
-                 k_own=K_OWN * 1.25, v=4.787 * 10**4, k_speed=K_SPEED, angle=1.4)
+                 k_own=K_OWN * 1.25, v=4.787 * 10**4, time = TIME, angle=1.4)
 Venus = Planet(screen, m=4.87 * 10**24, r_own=6.0518 * 10**6, r_circulation=0.723*R_CIRCULATION_EARTH,
-               v=3.502 * 10**4, k_speed=K_SPEED, angle=1.2)
+               v=3.502 * 10**4, time = TIME, angle=1.2)
 Earth = Planet(screen)
 Mars = Planet(screen, m=6.39 * 10**23, r_own=3.3895 * 10**6, r_circulation=1.523*R_CIRCULATION_EARTH,
-              k_own=K_OWN * 1.25, v=2.413 * 10**4, k_speed=K_SPEED, angle=1.0)
+              k_own=K_OWN * 1.25, v=2.413 * 10**4, time = TIME, angle=1.0)
 Jupiter = Planet(screen, m=1.898 * 10**27, r_own=69.911 * 10**6, r_circulation=5.203*R_CIRCULATION_EARTH,
-                 k_own=K_OWN/4, v=1.306 * 10**4, k_speed=K_SPEED, angle=0.8)
+                 k_own=K_OWN/4, v=1.306 * 10**4, time = TIME, angle=0.8)
 Saturn = Planet(screen, m=5.683 * 10**26, r_own=58.232 * 10**6, r_circulation=9.555*R_CIRCULATION_EARTH,
-                k_own=K_OWN/3.75, v=9.66 * 10**3, k_speed=K_SPEED, angle=0.6)
+                k_own=K_OWN/3.75, v=9.66 * 10**3, time = TIME, angle=0.6)
 Uranus = Planet(screen, m=8.681 * 10**25, r_own=25.362 * 10**6, r_circulation=19.22*R_CIRCULATION_EARTH,
-                k_own=K_OWN/3.25, v=6.8 * 10**3, k_speed=K_SPEED, angle=0.4)
+                k_own=K_OWN/3.25, v=6.8 * 10**3, time = TIME, angle=0.4)
 Neptune = Planet(screen, m=1.024 * 10**26, r_own=24.622 * 10**6, r_circulation=30.11*R_CIRCULATION_EARTH,
-                 k_own=K_OWN/3.25, v=5.44 * 10**3, k_speed=K_SPEED, angle=0.2)
+                 k_own=K_OWN/3.25, v=5.44 * 10**3, time = TIME, angle=0.2)
 # список из всех планет
 Planets = [Mercury, Venus, Earth, Mars, Jupiter, Saturn, Uranus, Neptune]
 # Инициализация объекта, совершающего гравитационный манёвр
