@@ -18,7 +18,7 @@ WIDTH, HEIGHT = windll.user32.GetSystemMetrics(0) - 10, windll.user32.GetSystemM
 
 # Физические константы в СИ
 G = 6.6743 / 10**11
-M_SUN = 3.955 * 10**30
+M_SUN = 1.9885 * 10**30
 R_OWN_SUN = 100.34 * 10**6
 M_EARTH = 5.9742 * 10**24
 R_CIRCULATION_EARTH = 1.49598 * 10**11
@@ -30,7 +30,7 @@ V_OWN_ROTATION_EARTH = 465.1013  # на экваторе
 K_OWN, K_CIRCULATION = 1 / 10**6 / 2, 1 / 10**10/0.3
 # Радиус удаления от Солнца. Нужен, чтобы отдалить планеты от звезды, противодействует слипанию
 R_START = 0
-TIME = 5 * 10**4
+TIME = 10 * 10**4
 
 class BaseBody:
     """ Класс BaseBody
@@ -66,6 +66,7 @@ class BaseBody:
         self.x, self.y = Sun.x + self.r_circulation * math.cos(angle), Sun.y + self.r_circulation * math.sin(angle)
         self.ax, self.ay = 0, 0
         self.acceleration()
+        print(v, G, M_SUN, r_circulation)
     def acceleration(self):
         a_sun_perpendicular = G * M_SUN / ((self.x - Sun.x) ** 2 + (self.y - Sun.y) ** 2)
         self.angle = math.atan2(self.y - Sun.y, self.x - Sun.x)
@@ -114,7 +115,6 @@ class Voyager(BaseBody):
         self.ay = -1 * a_sun_perpendicular * math.sin(self.angle)
     def move(self):
         self.acceleration()
-        print(self.x - Sun.x, self.y - Sun.y, self.vx, self.vy)
         self.vx -= self.ax * self.time
         self.vy -= self.ay * self.time
         self.x -= self.vx * self.time
@@ -200,7 +200,7 @@ Neptune = Planet(screen, m=1.024 * 10**26, r_own=24.622 * 10**6, r_circulation=3
 Planets = [Mercury, Venus, Earth, Mars, Jupiter, Saturn, Uranus, Neptune]
 # Инициализация объекта, совершающего гравитационный манёвр
 voyager = Voyager(screen, color=WHITE, angle=0, r_own=100, k_own=K_OWN * 10**4 * 4)
-
+tick = 0 # переменная для подсчёта количество выполненных циклов и перевод их в дни и годы
 # Цикл игры, прекращается при нажатии кнопки выхода
 finished = False
 while not finished:
@@ -226,6 +226,21 @@ while not finished:
             finished = True
         #if event.type == pygame.KEYDOWN:
             # Sun.change_x_y()
+    tick += 1
+    year = int((tick * TIME)//(365.25 * 86400))
+    day = ((tick * TIME)//86400) % 365
+    f1 = pygame.font.Font(None, 36)
+    if year >= 5:
+        text1 = f1.render('прошло ' + str(year) + ' лет ' + str(day) + ' дней',
+                          1, (255, 255, 255))
+    elif year > 1:
+        text1 = f1.render('прошло ' + str(year) + ' года ' + str(day) + ' дней',
+                          1, (255, 255, 255))
+    else:
+        text1 = f1.render('прошёл ' + str(year) + ' год ' + str(day) + ' дней',
+                          1, (255, 255, 255))
+    screen.blit(text1, (10, 50))
+    pygame.display.update()
 
     keys = pygame.key.get_pressed()
     if keys[pygame.K_d] or keys[pygame.K_a] or keys[pygame.K_w] or keys[pygame.K_s]:
