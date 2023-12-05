@@ -153,10 +153,28 @@ class Star:
         pygame.draw.circle(self.screen, center=(self.x * K_CIRCULATION, self.y * K_CIRCULATION),
                            radius=self.r_own * self.k_own, color=self.color)
 
-    def left(self):
-        self.x -= (10 / K_CIRCULATION)
-        Mercury.x -= (10 / K_CIRCULATION)
-        Venus.x -= (10 / K_CIRCULATION)
+
+    def move_camera(self, event):
+        if keys[pygame.K_w]:
+            self.y += 10/K_CIRCULATION
+            for planet in Planets:
+                planet.y += 10/K_CIRCULATION
+            voyager.y += 10/K_CIRCULATION
+        if keys[pygame.K_s]:
+            self.y -= 10/K_CIRCULATION
+            for planet in Planets:
+                planet.y -= 10/K_CIRCULATION
+            voyager.y -= 10 / K_CIRCULATION
+        if keys[pygame.K_d]:
+            self.x -= 10/K_CIRCULATION
+            for planet in Planets:
+                planet.x -= 10/K_CIRCULATION
+            voyager.x -= 10 / K_CIRCULATION
+        if keys[pygame.K_a]:
+            self.x += 10/K_CIRCULATION
+            for planet in Planets:
+                planet.x += 10/K_CIRCULATION
+            voyager.x += 10 / K_CIRCULATION
 
 
 # Инициализация окна, синхронизация со временем
@@ -183,6 +201,8 @@ Uranus = Planet(screen, m=8.681 * 10**25, r_own=25.362 * 10**6, r_circulation=19
                 k_own=K_OWN/3.25, v=6.8 * 10**3, k_speed=K_SPEED, angle=0.4)
 Neptune = Planet(screen, m=1.024 * 10**26, r_own=24.622 * 10**6, r_circulation=30.11*R_CIRCULATION_EARTH,
                  k_own=K_OWN/3.25, v=5.44 * 10**3, k_speed=K_SPEED, angle=0.2)
+# список из всех планет
+Planets = [Mercury, Venus, Earth, Mars, Jupiter, Saturn, Uranus, Neptune]
 # Инициализация объекта, совершающего гравитационный манёвр
 voyager = Voyager(screen, color=WHITE, angle=0, r_own=100, k_own=K_OWN * 10**4 * 4)
 
@@ -209,11 +229,13 @@ while not finished:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             finished = True
-        if event.type == pygame.KEYDOWN:
+        #if event.type == pygame.KEYDOWN:
             # Sun.change_x_y()
-            if event.key == pygame.K_LEFT:
-                Sun.left()
-            elif event.key == pygame.K_RIGHT:
-                pass
+
+    keys = pygame.key.get_pressed()
+    if keys[pygame.K_d] or keys[pygame.K_a] or keys[pygame.K_w] or keys[pygame.K_s]:
+        Sun.move_camera(event)
+
+
 
 pygame.quit()
