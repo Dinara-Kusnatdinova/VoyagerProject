@@ -21,15 +21,15 @@ G = 6.6743 / 10**11
 M_SUN = 3.955 * 10**30
 R_OWN_SUN = 100.34 * 10**6
 M_EARTH = 5.9742 * 10**24
-R_CIRCULATION_EARTH = 1.495978707 * 10**11
+R_CIRCULATION_EARTH = 1.49598 * 10**11
 R_OWN_EARTH = 6.371 * 10**6
 V_ORBITAL_EARTH = 2.979 * 10**4
 V_OWN_ROTATION_EARTH = 465.1013  # на экваторе
 # Масштабные коэффициенты (могут меняться для каждого тела); коэффициент увелечения скорости:
 # увеличение линейного размера тел, увеличение расстояния между телами; коэффициент увелечения скорости
-K_OWN, K_CIRCULATION, K_SPEED = 1 / 10**6 / 2, 1 / 10**10/0.3, 10**5
+K_OWN, K_CIRCULATION = 1 / 10**6 / 2, 1 / 10**10/0.3
 # Радиус удаления от Солнца. Нужен, чтобы отдалить планеты от звезды, противодействует слипанию
-R_START = 0 * 10**11
+R_START = 0
 TIME = 10**5
 
 class BaseBody:
@@ -65,7 +65,12 @@ class BaseBody:
         self.m = m
         self.x, self.y = Sun.x + self.r_circulation * math.cos(angle), Sun.y + self.r_circulation * math.sin(angle)
         self.ax, self.ay = 0, 0
-        self.move()
+        self.acceleration()
+    def acceleration(self):
+        a_sun_perpendicular = G * M_SUN / ((self.x - Sun.x) ** 2 + (self.y - Sun.y) ** 2)
+        self.angle = math.atan2(self.y - Sun.y, self.x - Sun.x)
+        self.ax = -1 * a_sun_perpendicular * math.cos(self.angle)
+        self.ay = -1 * a_sun_perpendicular * math.sin(self.angle)
 
     def move(self):
         """Перемещает тело по прошествии единицы времени.
@@ -73,10 +78,7 @@ class BaseBody:
         Метод описывает перемещение тела за один кадр перерисовки. То есть, обновляет значения
         self.x и self.y с учетом скоростей self.vx и self.vy.
         """
-        a_sun_perpendicular = self.v ** 2 / self.r_circulation
-        self.angle = math.atan2(self.y - Sun.y, self.x - Sun.x)
-        self.ax = -1 * a_sun_perpendicular * math.cos(self.angle)
-        self.ay = -1 * a_sun_perpendicular * math.sin(self.angle)
+        self.acceleration()
         self.vx -= self.ax * self.time
         self.vy -= self.ay * self.time
         self.x -= self.vx * self.time
@@ -104,15 +106,20 @@ class Voyager(BaseBody):
     """ Класс Voyager
     описывает тело, совершающее гравитационный манёвр.
     """
-    def move(self):
+
+    def acceleration(self):
         a_sun_perpendicular = G * M_SUN / ((self.x - Sun.x) ** 2 + (self.y - Sun.y) ** 2)
         self.angle = math.atan2(self.y - Sun.y, self.x - Sun.x)
         self.ax = -1 * a_sun_perpendicular * math.cos(self.angle)
         self.ay = -1 * a_sun_perpendicular * math.sin(self.angle)
+    def move(self):
+        self.acceleration()
+        print(self.x - Sun.x, self.y - Sun.y)
         self.vx -= self.ax * self.time
         self.vy -= self.ay * self.time
         self.x -= self.vx * self.time
         self.y -= self.vy * self.time
+
 
         # NEED TO BE FIXED
 
