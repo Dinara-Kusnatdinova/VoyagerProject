@@ -19,17 +19,17 @@ WIDTH, HEIGHT = windll.user32.GetSystemMetrics(0) - 10, windll.user32.GetSystemM
 # Физические константы в СИ
 G = 6.6743 / 10**11
 M_SUN = 3.955 * 10**30
-R_OWN_SUN = 696.34 * 10**6
+R_OWN_SUN = 100.34 * 10**6
 M_EARTH = 5.9742 * 10**24
 R_CIRCULATION_EARTH = 1.495978707 * 10**11
 R_OWN_EARTH = 6.371 * 10**6
-V_ORBITAL_EARTH = 3 * 10**4
+V_ORBITAL_EARTH = 2.979 * 10**4
 V_OWN_ROTATION_EARTH = 465.1013  # на экваторе
 # Масштабные коэффициенты (могут меняться для каждого тела); коэффициент увелечения скорости:
 # увеличение линейного размера тел, увеличение расстояния между телами; коэффициент увелечения скорости
-K_OWN, K_CIRCULATION, K_SPEED = 1 / 10**6 / 1.25, 1 / 10**10 / 1.5, 10**5
+K_OWN, K_CIRCULATION, K_SPEED = 1 / 10**6 / 2, 1 / 10**10/0.3, 10**5
 # Радиус удаления от Солнца. Нужен, чтобы отдалить планеты от звезды, противодействует слипанию
-R_START = 8 * 10**11
+R_START = 0 * 10**11
 
 
 class BaseBody:
@@ -60,6 +60,7 @@ class BaseBody:
         self.screen = screen
         self.r_own, self.k_own, self.k_circulation, self.k_speed = r_own, k_own, k_circulation, k_speed
         self.color, self.r_circulation = color, r_circulation
+        self.v0 = v
         self.v = v * self.k_speed
         self.vx, self.vy = -1 * v * math.sin(angle) * self.k_speed, v * math.cos(angle) * self.k_speed
         self.m = m
@@ -88,8 +89,8 @@ class BaseBody:
         self.vx и self.vy с учетом ускорений self.ax и self.ay.
         """
         self.set_acceleration()
-        self.vx += self.ax
-        self.vy += self.ay
+        self.vx -= self.ax
+        self.vy -= self.ay
 
     def move(self):
         """Перемещает тело по прошествии единицы времени.
@@ -98,11 +99,12 @@ class BaseBody:
         self.x и self.y с учетом скоростей self.vx и self.vy.
         """
         self.change_speed()
-        self.x += self.vx
-        self.y += self.vy
+        self.x -= self.vx
+        self.y -= self.vy
 
     def draw(self):
         """Рисует тело по прошествии единицы времени.
+
 
         Метод отрисовки тела. Обновляет положение тела на экране с учетом self.x и self.y.
         """
@@ -115,9 +117,7 @@ class Planet(BaseBody):
     """ Класс Planet
     задаёт тела, движущиеся в системе звезды по орбитам, близким к круговым.
     """
-    def set_acceleration(self):
-        super().set_acceleration()
-        pass
+    pass
 
 
 class Voyager(BaseBody):
@@ -153,6 +153,11 @@ class Star:
         pygame.draw.circle(self.screen, center=(self.x * K_CIRCULATION, self.y * K_CIRCULATION),
                            radius=self.r_own * self.k_own, color=self.color)
 
+    def left(self):
+        self.x -= (10 / K_CIRCULATION)
+        Mercury.x -= (10 / K_CIRCULATION)
+        Venus.x -= (10 / K_CIRCULATION)
+
 
 # Инициализация окна, синхронизация со временем
 pygame.init()
@@ -163,21 +168,21 @@ clock = pygame.time.Clock()
 # Инициализация Солнца
 Sun = Star(screen, k_own=K_OWN / 15)
 # Инициализация планет солнечной системы
-Mercury = Planet(screen, m=3.3 * 10**23, r_own=2.4397 * 10**6, r_circulation=5.791 * 10**10,
-                 k_own=K_OWN * 1.25, v=4.7 * 10**4, k_speed=K_SPEED / 2, angle=1.4)
-Venus = Planet(screen, m=4.87 * 10**24, r_own=6.0518 * 10**6, r_circulation=1.082 * 10**11,
-               v=3.5 * 10**4, k_speed=K_SPEED / 1.5, angle=1.2)
+Mercury = Planet(screen, m=3.3 * 10**23, r_own=2.4397 * 10**6, r_circulation=0.387*R_CIRCULATION_EARTH,
+                 k_own=K_OWN * 1.25, v=4.787 * 10**4, k_speed=K_SPEED, angle=1.4)
+Venus = Planet(screen, m=4.87 * 10**24, r_own=6.0518 * 10**6, r_circulation=0.723*R_CIRCULATION_EARTH,
+               v=3.502 * 10**4, k_speed=K_SPEED, angle=1.2)
 Earth = Planet(screen)
-Mars = Planet(screen, m=6.39 * 10**23, r_own=3.3895 * 10**6, r_circulation=2.279 * 10**11,
-              k_own=K_OWN * 1.25, v=2.4 * 10**4, k_speed=K_SPEED * 1.5, angle=1.0)
-Jupiter = Planet(screen, m=1.898 * 10**27, r_own=69.911 * 10**6, r_circulation=7.785 * 10**11,
-                 k_own=K_OWN/4, v=1.3 * 10**4, k_speed=K_SPEED * 5, angle=0.8)
-Saturn = Planet(screen, m=5.683 * 10**26, r_own=58.232 * 10**6, r_circulation=1.434 * 10**12,
-                k_own=K_OWN/3.75, v=9.7 * 10**3, k_speed=K_SPEED * 6.5, angle=0.6)
-Uranus = Planet(screen, m=8.681 * 10**25, r_own=25.362 * 10**6, r_circulation=2.871 * 10**12,
-                k_own=K_OWN/3.25, v=6.8 * 10**3, k_speed=K_SPEED * 12, angle=0.4)
-Neptune = Planet(screen, m=1.024 * 10**26, r_own=24.622 * 10**6, r_circulation=4.495 * 10**12,
-                 k_own=K_OWN/3.25, v=5.4 * 10**3, k_speed=K_SPEED * 12.5, angle=0.2)
+Mars = Planet(screen, m=6.39 * 10**23, r_own=3.3895 * 10**6, r_circulation=1.523*R_CIRCULATION_EARTH,
+              k_own=K_OWN * 1.25, v=2.413 * 10**4, k_speed=K_SPEED, angle=1.0)
+Jupiter = Planet(screen, m=1.898 * 10**27, r_own=69.911 * 10**6, r_circulation=5.203*R_CIRCULATION_EARTH,
+                 k_own=K_OWN/4, v=1.306 * 10**4, k_speed=K_SPEED, angle=0.8)
+Saturn = Planet(screen, m=5.683 * 10**26, r_own=58.232 * 10**6, r_circulation=9.555*R_CIRCULATION_EARTH,
+                k_own=K_OWN/3.75, v=9.66 * 10**3, k_speed=K_SPEED, angle=0.6)
+Uranus = Planet(screen, m=8.681 * 10**25, r_own=25.362 * 10**6, r_circulation=19.22*R_CIRCULATION_EARTH,
+                k_own=K_OWN/3.25, v=6.8 * 10**3, k_speed=K_SPEED, angle=0.4)
+Neptune = Planet(screen, m=1.024 * 10**26, r_own=24.622 * 10**6, r_circulation=30.11*R_CIRCULATION_EARTH,
+                 k_own=K_OWN/3.25, v=5.44 * 10**3, k_speed=K_SPEED, angle=0.2)
 # Инициализация объекта, совершающего гравитационный манёвр
 voyager = Voyager(screen, color=WHITE, angle=0, r_own=100, k_own=K_OWN * 10**4 * 4)
 
@@ -193,6 +198,7 @@ while not finished:
     voyager.draw()
     pygame.display.update()
 
+
     # Движение тел
     (Mercury.move(), Venus.move(), Earth.move(), Mars.move(),
      Jupiter.move(), Saturn.move(), Uranus.move(), Neptune.move())
@@ -203,5 +209,11 @@ while not finished:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             finished = True
+        if event.type == pygame.KEYDOWN:
+            # Sun.change_x_y()
+            if event.key == pygame.K_LEFT:
+                Sun.left()
+            elif event.key == pygame.K_RIGHT:
+                pass
 
 pygame.quit()
