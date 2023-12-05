@@ -27,7 +27,7 @@ V_ORBITAL_EARTH = 3 * 10**4
 V_OWN_ROTATION_EARTH = 465.1013  # на экваторе
 # Масштабные коэффициенты (могут меняться для каждого тела); коэффициент увелечения скорости:
 # увеличение линейного размера тел, увеличение расстояния между телами; коэффициент увелечения скорости
-K_OWN, K_CIRCULATION, K_SPEED = 1 / 10**6 / 1.25, 1 / 10**10 / 1.5, 10**5
+K_OWN, K_CIRCULATION, K_SPEED = 1 / 10**6 / 2, 1 / 10**10, 10**5
 # Радиус удаления от Солнца. Нужен, чтобы отдалить планеты от звезды, противодействует слипанию
 R_START = 8 * 10**11
 
@@ -60,6 +60,7 @@ class BaseBody:
         self.screen = screen
         self.r_own, self.k_own, self.k_circulation, self.k_speed = r_own, k_own, k_circulation, k_speed
         self.color, self.r_circulation = color, r_circulation
+        self.v0 = v
         self.v = v * self.k_speed
         self.vx, self.vy = -1 * v * math.sin(angle) * self.k_speed, v * math.cos(angle) * self.k_speed
         self.m = m
@@ -115,9 +116,7 @@ class Planet(BaseBody):
     """ Класс Planet
     задаёт тела, движущиеся в системе звезды по орбитам, близким к круговым.
     """
-    def set_acceleration(self):
-        super().set_acceleration()
-        pass
+    pass
 
 
 class Voyager(BaseBody):
@@ -152,6 +151,11 @@ class Star:
         """
         pygame.draw.circle(self.screen, center=(self.x * K_CIRCULATION, self.y * K_CIRCULATION),
                            radius=self.r_own * self.k_own, color=self.color)
+
+    def left(self):
+        self.x -= (10 / K_CIRCULATION)
+        Mercury.x -= (10 / K_CIRCULATION)
+        Venus.x -= (10 / K_CIRCULATION)
 
 
 # Инициализация окна, синхронизация со временем
@@ -203,5 +207,11 @@ while not finished:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             finished = True
+        if event.type == pygame.KEYDOWN:
+            # Sun.change_x_y()
+            if event.key == pygame.K_LEFT:
+                Sun.left()
+            elif event.key == pygame.K_RIGHT:
+                pass
 
 pygame.quit()
