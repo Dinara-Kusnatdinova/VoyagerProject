@@ -23,20 +23,20 @@ R_OWN_SUN = 100.34 * 10**6
 M_EARTH = 5.9742 * 10**24
 R_CIRCULATION_EARTH = 1.49598 * 10**11
 R_OWN_EARTH = 6.371 * 10**6
-V_ORBITAL_EARTH = 2.979 * 10**4
+V_ORBITAL_EARTH = 4 * 10**4
 V_OWN_ROTATION_EARTH = 465.1013  # на экваторе
 # Масштабные коэффициенты (могут меняться для каждого тела); коэффициент увелечения скорости:
 # увеличение линейного размера тел, увеличение расстояния между телами; коэффициент увелечения скорости
 K_OWN, K_CIRCULATION = 1 / 10**6 / 2, 1 / 10**10/0.3
 # Радиус удаления от Солнца. Нужен, чтобы отдалить планеты от звезды, противодействует слипанию
 R_START = 0
-TIME = 10**5
+TIME = 5 * 10**4
 
 class BaseBody:
     """ Класс BaseBody
     описывает тела, движущиеся в системе звезды по различным орбитам.
     """
-    def __init__(self, screen, v=V_ORBITAL_EARTH, angle=0.0, m=M_EARTH,
+    def __init__(self, screen, angle=0.0, m=M_EARTH,
                  r_own=R_OWN_EARTH, r_circulation=R_CIRCULATION_EARTH, color=BLUE,
                  k_own=K_OWN, k_circulation=K_CIRCULATION, time = TIME):
         """ Конструктор класса BaseBody
@@ -60,7 +60,7 @@ class BaseBody:
         self.screen = screen
         self.r_own, self.k_own, self.k_circulation, self.time = r_own, k_own, k_circulation, time
         self.color, self.r_circulation = color, r_circulation
-        self.v = v
+        v = math.sqrt(G*M_SUN/r_circulation)
         self.vx, self.vy = -1 * v * math.sin(angle), v * math.cos(angle)
         self.m = m
         self.x, self.y = Sun.x + self.r_circulation * math.cos(angle), Sun.y + self.r_circulation * math.sin(angle)
@@ -114,7 +114,7 @@ class Voyager(BaseBody):
         self.ay = -1 * a_sun_perpendicular * math.sin(self.angle)
     def move(self):
         self.acceleration()
-        print(self.x - Sun.x, self.y - Sun.y)
+        print(self.x - Sun.x, self.y - Sun.y, self.vx, self.vy)
         self.vx -= self.ax * self.time
         self.vy -= self.ay * self.time
         self.x -= self.vx * self.time
@@ -182,20 +182,20 @@ clock = pygame.time.Clock()
 Sun = Star(screen, k_own=K_OWN / 15)
 # Инициализация планет солнечной системы
 Mercury = Planet(screen, m=3.3 * 10**23, r_own=2.4397 * 10**6, r_circulation=0.387*R_CIRCULATION_EARTH,
-                 k_own=K_OWN * 1.25, v=4.787 * 10**4, time = TIME, angle=1.4)
+                 k_own=K_OWN * 1.25, time = TIME, angle=1.4)
 Venus = Planet(screen, m=4.87 * 10**24, r_own=6.0518 * 10**6, r_circulation=0.723*R_CIRCULATION_EARTH,
-               v=3.502 * 10**4, time = TIME, angle=1.2)
+               time = TIME, angle=1.2)
 Earth = Planet(screen)
 Mars = Planet(screen, m=6.39 * 10**23, r_own=3.3895 * 10**6, r_circulation=1.523*R_CIRCULATION_EARTH,
-              k_own=K_OWN * 1.25, v=2.413 * 10**4, time = TIME, angle=1.0)
+              k_own=K_OWN * 1.25, time = TIME, angle=1.0)
 Jupiter = Planet(screen, m=1.898 * 10**27, r_own=69.911 * 10**6, r_circulation=5.203*R_CIRCULATION_EARTH,
-                 k_own=K_OWN/4, v=1.306 * 10**4, time = TIME, angle=0.8)
+                 k_own=K_OWN/4, time = TIME, angle=0.8)
 Saturn = Planet(screen, m=5.683 * 10**26, r_own=58.232 * 10**6, r_circulation=9.555*R_CIRCULATION_EARTH,
-                k_own=K_OWN/3.75, v=9.66 * 10**3, time = TIME, angle=0.6)
+                k_own=K_OWN/3.75, time = TIME, angle=0.6)
 Uranus = Planet(screen, m=8.681 * 10**25, r_own=25.362 * 10**6, r_circulation=19.22*R_CIRCULATION_EARTH,
-                k_own=K_OWN/3.25, v=6.8 * 10**3, time = TIME, angle=0.4)
+                k_own=K_OWN/3.25, time = TIME, angle=0.4)
 Neptune = Planet(screen, m=1.024 * 10**26, r_own=24.622 * 10**6, r_circulation=30.11*R_CIRCULATION_EARTH,
-                 k_own=K_OWN/3.25, v=5.44 * 10**3, time = TIME, angle=0.2)
+                 k_own=K_OWN/3.25, time = TIME, angle=0.2)
 # список из всех планет
 Planets = [Mercury, Venus, Earth, Mars, Jupiter, Saturn, Uranus, Neptune]
 # Инициализация объекта, совершающего гравитационный манёвр
