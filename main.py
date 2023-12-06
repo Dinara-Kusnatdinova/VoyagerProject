@@ -1,6 +1,7 @@
 import pygame
 from ctypes import windll
 import math
+import pymorphy3
 
 
 FPS = 30
@@ -140,18 +141,19 @@ class Voyager(BaseBody):
         year = int((self.tick * TIME) // (365.25 * 86400))
         day = ((self.tick * TIME) // 86400) % 365
         f1 = pygame.font.Font(None, 36)
-        if year >= 5:
-            text1 = f1.render('прошло ' + str(year) + ' лет ' + str(day) + ' дней',
-                              1, (255, 255, 255))
-        elif year > 1:
-            text1 = f1.render('прошло ' + str(year) + ' года ' + str(day) + ' дней',
+        if year > 0:
+            morph = pymorphy3.MorphAnalyzer()
+            years_output = morph.parse('год')[0].make_agree_with_number(year).word
+            if year > 4:
+                years_output = 'лет'
+            text1 = f1.render(f'прошло {str(year)} {years_output} {str(day)} дней',
                               1, (255, 255, 255))
         else:
-            text1 = f1.render('прошёл ' + str(year) + ' год ' + str(day) + ' дней',
-                              1, (255, 255, 255))
-        text2 = f1.render('скорость Вояжера ' + str(round(math.sqrt(self.vx**2 + self.vy**2) / 1000, 2)) + ' км/с',
+            text1 = f1.render(f'прошло {str(day)} дней', 1, (255, 255, 255))
+
+        text2 = f1.render('скорость Вояджера ' + str(round(math.sqrt(self.vx**2 + self.vy**2) / 1000, 2)) + ' км/с',
                           1, (255, 255, 255))
-        text3 = f1.render('расстояние от Вояжера до Солнца ' +
+        text3 = f1.render('расстояние от Вояджера до Солнца ' +
                           str(round(math.sqrt((self.x - Sun.x) ** 2 +
                                               (self.y - Sun.y) ** 2) / R_CIRCULATION_EARTH, 2)) + ' а.е.',
                           1, (255, 255, 255))
