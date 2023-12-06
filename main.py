@@ -36,13 +36,14 @@ TIME = 144 * 10**3
 # Время одной итерации в с
 dt = 500
 
+
 class BaseBody:
     """ Класс BaseBody
     описывает тела, движущиеся в системе звезды по различным орбитам.
     """
     def __init__(self, screen, angle=0.0, m=M_EARTH,
                  r_own=R_OWN_EARTH, r_circulation=R_CIRCULATION_EARTH, color=BLUE,
-                 k_own=K_OWN, k_circulation=K_CIRCULATION, time = TIME, v = 0):
+                 k_own=K_OWN, k_circulation=K_CIRCULATION, time=TIME, v=0):
         """ Конструктор класса BaseBody
         Args:
         v - полная орбитальная скорость объекта
@@ -71,7 +72,7 @@ class BaseBody:
         self.x, self.y = Sun.x + self.r_circulation * math.cos(angle), Sun.y + self.r_circulation * math.sin(angle)
         self.ax, self.ay = 0, 0
         self.acceleration()
-        self.tick = 0 # переменная для подсчёта количество выполненных циклов и перевод их в дни и годы
+        self.tick = 0  # переменная для подсчёта количество выполненных циклов и перевод их в дни и годы
 
     def acceleration(self):
         a_sun_perpendicular = G * M_SUN / ((self.x - Sun.x) ** 2 + (self.y - Sun.y) ** 2)
@@ -85,7 +86,7 @@ class BaseBody:
         Метод описывает перемещение тела за один кадр перерисовки. То есть, обновляет значения
         self.x и self.y с учетом скоростей self.vx и self.vy.
         """
-        for t in range(0,TIME,dt):
+        for t in range(0, TIME, dt):
             self.acceleration()
             self.vx -= self.ax * dt
             self.vy -= self.ay * dt
@@ -115,24 +116,24 @@ class Voyager(BaseBody):
     описывает тело, совершающее гравитационный манёвр.
     """
     global Voyager_track_X, Voyager_track_Y
+
     # Массивы хранящие информацию о треке
-    def Voyager_track_write(self):
+    def voyager_track_write(self):
         Voyager_track_X.append(self.x)
         Voyager_track_Y.append(self.y)
 
-
-    def Voyager_track_draw(self):
+    def voyager_track_draw(self):
         for i in range(len(Voyager_track_X)-1):
             if len(Voyager_track_X) > 1:
-                pygame.draw.line(screen, BLUE, [Voyager_track_X[i]*K_CIRCULATION, Voyager_track_Y[i]*K_CIRCULATION],
-                                [Voyager_track_X[i+1]*K_CIRCULATION, Voyager_track_Y[i+1]*K_CIRCULATION], 1)
+                pygame.draw.line(screen, BLUE,
+                                 [Voyager_track_X[i]*K_CIRCULATION, Voyager_track_Y[i]*K_CIRCULATION],
+                                 [Voyager_track_X[i+1]*K_CIRCULATION, Voyager_track_Y[i+1]*K_CIRCULATION], 1)
 
     def acceleration(self):
         a_sun_perpendicular = G * M_SUN / ((self.x - Sun.x) ** 2 + (self.y - Sun.y) ** 2)
         self.angle = math.atan2(self.y - Sun.y, self.x - Sun.x)
         self.ax = -1 * a_sun_perpendicular * math.cos(self.angle)
         self.ay = -1 * a_sun_perpendicular * math.sin(self.angle)
-
 
     def draw_information(self):
         self.tick += 1
@@ -148,11 +149,11 @@ class Voyager(BaseBody):
         else:
             text1 = f1.render('прошёл ' + str(year) + ' год ' + str(day) + ' дней',
                               1, (255, 255, 255))
-        text2 = f1.render('скорость Вояджера ' + str(round(math.sqrt(self.vx**2 + self.vy**2) / 1000, 2)) + ' км/с',
+        text2 = f1.render('скорость Вояжера ' + str(round(math.sqrt(self.vx**2 + self.vy**2) / 1000, 2)) + ' км/с',
                           1, (255, 255, 255))
-        text3 = f1.render('расстояние от Вояджера до Солнца ' +
+        text3 = f1.render('расстояние от Вояжера до Солнца ' +
                           str(round(math.sqrt((self.x - Sun.x) ** 2 +
-                                        (self.y - Sun.y) ** 2) / R_CIRCULATION_EARTH, 2)) + ' а.е.',
+                                              (self.y - Sun.y) ** 2) / R_CIRCULATION_EARTH, 2)) + ' а.е.',
                           1, (255, 255, 255))
         screen.blit(text1, (15, 15))
         screen.blit(text2, (15, 50))
@@ -162,6 +163,7 @@ class Voyager(BaseBody):
 class Star:
     global Voyager_track_X, Voyager_track_Y
     # Нужны для отрисовки трека при движении камеры
+
     def __init__(self, screen, x=WIDTH/2 / K_CIRCULATION, y=HEIGHT/2 / K_CIRCULATION, r_own=R_OWN_SUN,
                  color=YELLOW, m=M_SUN, k_own=K_OWN, k_circulation=K_CIRCULATION):
         """ Конструктор класса Star
@@ -185,9 +187,8 @@ class Star:
         pygame.draw.circle(self.screen, center=(self.x * K_CIRCULATION, self.y * K_CIRCULATION),
                            radius=self.r_own * self.k_own, color=self.color)
 
-
-    def move_camera(self, event):
-        # Здесь заложенно перемещение всех сущностей (звезды, планет, КА, трека)
+    def move_camera(self):
+        # Здесь заложено перемещение всех сущностей (звезды, планет, КА, трека)
         if keys[pygame.K_w]:
             self.y += 10/K_CIRCULATION
             for planet in Planets:
@@ -231,30 +232,29 @@ clock = pygame.time.Clock()
 Sun = Star(screen, k_own=K_OWN / 15)
 # Инициализация планет солнечной системы
 Mercury = Planet(screen, m=3.3 * 10**23, r_own=2.4397 * 10**6, r_circulation=0.387*R_CIRCULATION_EARTH,
-                 k_own=K_OWN * 1.25, time = TIME, angle=1.4)
+                 k_own=K_OWN * 1.25, time=TIME, angle=1.4)
 Venus = Planet(screen, m=4.87 * 10**24, r_own=6.0518 * 10**6, r_circulation=0.723*R_CIRCULATION_EARTH,
-               time = TIME, angle=1.2)
+               time=TIME, angle=1.2)
 Earth = Planet(screen)
 Mars = Planet(screen, m=6.39 * 10**23, r_own=3.3895 * 10**6, r_circulation=1.523*R_CIRCULATION_EARTH,
-              k_own=K_OWN * 1.25, time = TIME, angle=1.0)
+              k_own=K_OWN * 1.25, time=TIME, angle=1.0)
 Jupiter = Planet(screen, m=1.898 * 10**27, r_own=69.911 * 10**6, r_circulation=5.203*R_CIRCULATION_EARTH,
-                 k_own=K_OWN/4, time = TIME, angle=0.8)
+                 k_own=K_OWN/4, time=TIME, angle=0.8)
 Saturn = Planet(screen, m=5.683 * 10**26, r_own=58.232 * 10**6, r_circulation=9.555*R_CIRCULATION_EARTH,
-                k_own=K_OWN/3.75, time = TIME, angle=0.6)
+                k_own=K_OWN/3.75, time=TIME, angle=0.6)
 Uranus = Planet(screen, m=8.681 * 10**25, r_own=25.362 * 10**6, r_circulation=19.22*R_CIRCULATION_EARTH,
-                k_own=K_OWN/3.25, time = TIME, angle=0.4)
+                k_own=K_OWN/3.25, time=TIME, angle=0.4)
 Neptune = Planet(screen, m=1.024 * 10**26, r_own=24.622 * 10**6, r_circulation=30.11*R_CIRCULATION_EARTH,
-                 k_own=K_OWN/3.25, time = TIME, angle=0.2)
+                 k_own=K_OWN/3.25, time=TIME, angle=0.2)
 # список из всех планет
 Planets = [Mercury, Venus, Earth, Mars, Jupiter, Saturn, Uranus, Neptune]
 # Инициализация объекта, совершающего гравитационный манёвр
-voyager = Voyager(screen, color=WHITE, angle=0, r_own=100, k_own=K_OWN * 10**4 * 4, v =50000)
+voyager = Voyager(screen, color=WHITE, angle=0, r_own=100, k_own=K_OWN * 10**4 * 4, v=50000)
 # Цикл игры, прекращается при нажатии кнопки выхода
 
 Voyager_track_X = []
 Voyager_track_Y = []
 # Массивы, хранящие координаты Космического аппарата, по ним чертится его трек
-
 
 
 finished = False
@@ -267,9 +267,9 @@ while not finished:
      Jupiter.draw(), Saturn.draw(), Uranus.draw(), Neptune.draw())
     voyager.draw()
     voyager.draw_information()
-    # Запись трека вояджера и его отрисовка
-    voyager.Voyager_track_write()
-    voyager.Voyager_track_draw()
+    # Запись трека вояжера и его отрисовка
+    voyager.voyager_track_write()
+    voyager.voyager_track_draw()
 
     # Движение тел
     (Mercury.move(), Venus.move(), Earth.move(), Mars.move(),
@@ -282,13 +282,12 @@ while not finished:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             finished = True
-        #if event.type == pygame.KEYDOWN:
-            # Sun.change_x_y()
 
     keys = pygame.key.get_pressed()
     if keys[pygame.K_d] or keys[pygame.K_a] or keys[pygame.K_w] or keys[pygame.K_s]:
-        Sun.move_camera(event)
+        Sun.move_camera()
 
     pygame.display.update()
+
 
 pygame.quit()
