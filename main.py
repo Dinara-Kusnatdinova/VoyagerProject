@@ -30,9 +30,10 @@ V_OWN_ROTATION_EARTH = 465.1013  # на экваторе
 K_OWN, K_CIRCULATION = 1 / 10**6 / 2, 1 / 10**10/0.3
 # Радиус удаления от Солнца. Нужен, чтобы отдалить планеты от звезды, противодействует слипанию
 R_START = 0
-# Время, за которое сменяется кадр
-TIME = 3 * 10**2
-# Время одной итерации
+# Время в с, за которое сменяется кадр
+TIME = 144 * 10**3
+
+# Время одной итерации в с
 dt = 500
 
 class BaseBody:
@@ -84,7 +85,7 @@ class BaseBody:
         Метод описывает перемещение тела за один кадр перерисовки. То есть, обновляет значения
         self.x и self.y с учетом скоростей self.vx и self.vy.
         """
-        for t in range(TIME):
+        for t in range(0,TIME,dt):
             self.acceleration()
             self.vx -= self.ax * dt
             self.vy -= self.ay * dt
@@ -135,8 +136,8 @@ class Voyager(BaseBody):
 
     def draw_information(self):
         self.tick += 1
-        year = int((self.tick * TIME*dt) // (365.25 * 86400))
-        day = ((self.tick * TIME*dt) // 86400) % 365
+        year = int((self.tick * TIME) // (365.25 * 86400))
+        day = ((self.tick * TIME) // 86400) % 365
         f1 = pygame.font.Font(None, 36)
         if year >= 5:
             text1 = f1.render('прошло ' + str(year) + ' лет ' + str(day) + ' дней',
@@ -247,7 +248,7 @@ Neptune = Planet(screen, m=1.024 * 10**26, r_own=24.622 * 10**6, r_circulation=3
 # список из всех планет
 Planets = [Mercury, Venus, Earth, Mars, Jupiter, Saturn, Uranus, Neptune]
 # Инициализация объекта, совершающего гравитационный манёвр
-voyager = Voyager(screen, color=WHITE, angle=0, r_own=100, k_own=K_OWN * 10**4 * 4, v = 36000)
+voyager = Voyager(screen, color=WHITE, angle=0, r_own=100, k_own=K_OWN * 10**4 * 4, v =50000)
 # Цикл игры, прекращается при нажатии кнопки выхода
 
 Voyager_track_X = []
