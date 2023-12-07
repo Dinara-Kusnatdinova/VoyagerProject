@@ -34,7 +34,7 @@ R_START = 0
 TIME = 288 * 10**3
 
 # Время одной итерации в с
-dt = 5000
+dt = 500
 
 
 class BaseBody:
