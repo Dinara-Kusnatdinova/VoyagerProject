@@ -1,7 +1,6 @@
 import pygame
 from ctypes import windll
 import math
-import pymorphy3
 
 
 FPS = 30
@@ -32,7 +31,7 @@ K_OWN, K_CIRCULATION = 1 / 10**6 / 2, 1 / 10**10/0.3
 # Радиус удаления от Солнца. Нужен, чтобы отдалить планеты от звезды, противодействует слипанию
 R_START = 0
 # Время в с, за которое сменяется кадр
-TIME = 144 * 10**3
+TIME = 10 * 10**5
 
 # Время одной итерации в с
 dt = 500
@@ -130,27 +129,30 @@ class Voyager(BaseBody):
                                  [Voyager_track_X[i]*K_CIRCULATION, Voyager_track_Y[i]*K_CIRCULATION],
                                  [Voyager_track_X[i+1]*K_CIRCULATION, Voyager_track_Y[i+1]*K_CIRCULATION], 1)
 
-    def acceleration(self):
-        a_sun_perpendicular = G * M_SUN / ((self.x - Sun.x) ** 2 + (self.y - Sun.y) ** 2)
-        self.angle = math.atan2(self.y - Sun.y, self.x - Sun.x)
-        self.ax = -1 * a_sun_perpendicular * math.cos(self.angle)
-        self.ay = -1 * a_sun_perpendicular * math.sin(self.angle)
+    #def acceleration(self):
+    #    a_sun_perpendicular = G * M_SUN / ((self.x - Sun.x) ** 2 + (self.y - Sun.y) ** 2)
+    #    self.angle = math.atan2(self.y - Sun.y, self.x - Sun.x)
+    #    self.ax = -1 * a_sun_perpendicular * math.cos(self.angle)
+    #    self.ay = -1 * a_sun_perpendicular * math.sin(self.angle)
 
     def draw_information(self):
         self.tick += 1
         year = int((self.tick * TIME) // (365.25 * 86400))
         day = ((self.tick * TIME) // 86400) % 365
         f1 = pygame.font.Font(None, 36)
-        if year > 0:
-            morph = pymorphy3.MorphAnalyzer()
-            years_output = morph.parse('год')[0].make_agree_with_number(year).word
+        if year > 1:
             if year > 4:
-                years_output = 'лет'
-            text1 = f1.render(f'прошло {str(year)} {years_output} {str(day)} дней',
+                text1 = f1.render(f'прошло {str(year)} лет {str(day)} дней',
+                                  1, (255, 255, 255))
+            else:
+                text1 = f1.render(f'прошло {str(year)} года {str(day)} дней',
+                                  1, (255, 255, 255))
+        elif year == 1:
+            text1 = f1.render(f'прошёл {str(year)} год {str(day)} дней',
                               1, (255, 255, 255))
         else:
-            text1 = f1.render(f'прошло {str(day)} дней', 1, (255, 255, 255))
-
+            text1 = f1.render(f'прошло {str(day)} дней',
+                              1, (255, 255, 255))
         text2 = f1.render('скорость Вояджера ' + str(round(math.sqrt(self.vx**2 + self.vy**2) / 1000, 2)) + ' км/с',
                           1, (255, 255, 255))
         text3 = f1.render('расстояние от Вояджера до Солнца ' +
@@ -251,7 +253,7 @@ Neptune = Planet(screen, m=1.024 * 10**26, r_own=24.622 * 10**6, r_circulation=3
 # список из всех планет
 Planets = [Mercury, Venus, Earth, Mars, Jupiter, Saturn, Uranus, Neptune]
 # Инициализация объекта, совершающего гравитационный манёвр
-voyager = Voyager(screen, color=WHITE, angle=0, r_own=100, k_own=K_OWN * 10**4 * 4, v=50000)
+voyager = Voyager(screen, color=WHITE, angle=0, r_own=100, k_own=K_OWN * 10**4 * 4, v=40000)
 # Цикл игры, прекращается при нажатии кнопки выхода
 
 Voyager_track_X = []
