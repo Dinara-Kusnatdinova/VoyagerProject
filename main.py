@@ -101,8 +101,8 @@ class BaseBody:
 
         Метод отрисовки тела. Обновляет положение тела на экране с учетом self.x и self.y.
         """
-        pygame.draw.circle(self.screen, center=((R_START * math.cos(self.angle) + self.x) * self.k_circulation,
-                                                (R_START * math.sin(self.angle) + self.y) * self.k_circulation),
+        pygame.draw.circle(self.screen, center=(self.x * self.k_circulation,
+                                                self.y * self.k_circulation),
                            radius=self.r_own * self.k_own, color=self.color)
 
         # Массивы хранящие информацию о треке
