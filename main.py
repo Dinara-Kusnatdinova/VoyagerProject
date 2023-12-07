@@ -23,7 +23,7 @@ R_OWN_SUN = 100.34 * 10**6
 M_EARTH = 5.9742 * 10**24
 R_CIRCULATION_EARTH = 1.49598 * 10**11
 R_OWN_EARTH = 6.371 * 10**6
-V_ORBITAL_EARTH = 4 * 10**4
+V_ORBITAL_EARTH = 4 * 10**5
 V_OWN_ROTATION_EARTH = 465.1013  # на экваторе
 # Масштабные коэффициенты (могут меняться для каждого тела); коэффициент увелечения скорости:
 # увеличение линейного размера тел, увеличение расстояния между телами; коэффициент увелечения скорости
@@ -31,7 +31,7 @@ K_OWN, K_CIRCULATION = 1 / 10**6 / 2, 1 / 10**10/0.3
 # Радиус удаления от Солнца. Нужен, чтобы отдалить планеты от звезды, противодействует слипанию
 R_START = 0
 # Время в с, за которое сменяется кадр
-TIME = 10 * 10**5
+TIME = 20 * 10**4
 
 # Время одной итерации в с
 dt = 500
@@ -99,8 +99,8 @@ class BaseBody:
 
         Метод отрисовки тела. Обновляет положение тела на экране с учетом self.x и self.y.
         """
-        pygame.draw.circle(self.screen, center=((R_START * math.cos(self.angle) + self.x) * self.k_circulation,
-                                                (R_START * math.sin(self.angle) + self.y) * self.k_circulation),
+        pygame.draw.circle(self.screen, center=(self.x * self.k_circulation,
+                                                self.y * self.k_circulation),
                            radius=self.r_own * self.k_own, color=self.color)
 
 
@@ -129,11 +129,16 @@ class Voyager(BaseBody):
                                  [Voyager_track_X[i]*K_CIRCULATION, Voyager_track_Y[i]*K_CIRCULATION],
                                  [Voyager_track_X[i+1]*K_CIRCULATION, Voyager_track_Y[i+1]*K_CIRCULATION], 1)
 
-    #def acceleration(self):
-    #    a_sun_perpendicular = G * M_SUN / ((self.x - Sun.x) ** 2 + (self.y - Sun.y) ** 2)
-    #    self.angle = math.atan2(self.y - Sun.y, self.x - Sun.x)
-    #    self.ax = -1 * a_sun_perpendicular * math.cos(self.angle)
-    #    self.ay = -1 * a_sun_perpendicular * math.sin(self.angle)
+    def acceleration(self):
+        a_sun_perpendicular = G * M_SUN / ((self.x - Sun.x) ** 2 + (self.y - Sun.y) ** 2)
+        self.angle = math.atan2(self.y - Sun.y, self.x - Sun.x)
+        self.ax = -1 * a_sun_perpendicular * math.cos(self.angle)
+        self.ay = -1 * a_sun_perpendicular * math.sin(self.angle)
+        for plaret in Planets:
+            self.ax += (G * plaret.m / (math.sqrt((plaret.x - self.x) ** 2 + (plaret.y - self.y) ** 2)) ** 3 *
+                       (plaret.x - self.x))
+            self.ay += (G * plaret.m / (math.sqrt((plaret.x - self.x) ** 2 + (plaret.y - self.y)**2)) ** 3 *
+                       (plaret.y - self.y))
 
     def draw_information(self):
         self.tick += 1
@@ -240,8 +245,8 @@ Mercury = Planet(screen, m=3.3 * 10**23, r_own=2.4397 * 10**6, r_circulation=0.3
 Venus = Planet(screen, m=4.87 * 10**24, r_own=6.0518 * 10**6, r_circulation=0.723*R_CIRCULATION_EARTH,
                time=TIME, angle=1.2)
 Earth = Planet(screen)
-Mars = Planet(screen, m=6.39 * 10**23, r_own=3.3895 * 10**6, r_circulation=1.523*R_CIRCULATION_EARTH,
-              k_own=K_OWN * 1.25, time=TIME, angle=1.0)
+Mars = Planet(screen, m=6.39 * 10**27, r_own=3.3895 * 10**6, r_circulation=1.523*R_CIRCULATION_EARTH,
+              k_own=K_OWN * 1.25, time=TIME, angle=5.52)
 Jupiter = Planet(screen, m=1.898 * 10**27, r_own=69.911 * 10**6, r_circulation=5.203*R_CIRCULATION_EARTH,
                  k_own=K_OWN/4, time=TIME, angle=0.8)
 Saturn = Planet(screen, m=5.683 * 10**26, r_own=58.232 * 10**6, r_circulation=9.555*R_CIRCULATION_EARTH,
@@ -253,7 +258,7 @@ Neptune = Planet(screen, m=1.024 * 10**26, r_own=24.622 * 10**6, r_circulation=3
 # список из всех планет
 Planets = [Mercury, Venus, Earth, Mars, Jupiter, Saturn, Uranus, Neptune]
 # Инициализация объекта, совершающего гравитационный манёвр
-voyager = Voyager(screen, color=WHITE, angle=0, r_own=100, k_own=K_OWN * 10**4 * 4, v=40000)
+voyager = Voyager(screen, color=WHITE, angle=0.01, r_own=100, k_own=K_OWN * 10**4 * 4, v=34000)
 # Цикл игры, прекращается при нажатии кнопки выхода
 
 Voyager_track_X = []
@@ -289,6 +294,8 @@ while not finished:
 
     keys = pygame.key.get_pressed()
     if keys[pygame.K_d] or keys[pygame.K_a] or keys[pygame.K_w] or keys[pygame.K_s]:
+        Sun.move_camera()
+    if keys[pygame.K_d] or keys[pygame.K_a]:
         Sun.move_camera()
 
     pygame.display.update()
