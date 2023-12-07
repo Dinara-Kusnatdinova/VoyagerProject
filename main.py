@@ -115,9 +115,10 @@ class BaseBody:
         for i in range(len(self.object_track_X) - 1):
             if len(self.object_track_X) > 1:
                 pygame.draw.line(screen, BLUE,
-                                 [self.object_track_X[i] * K_CIRCULATION, self.object_track_Y[i] * K_CIRCULATION],
-                                 [self.object_track_X[i + 1] * K_CIRCULATION, self.object_track_Y[i + 1] * K_CIRCULATION], 1)
-
+                                 [self.object_track_X[i] * K_CIRCULATION,
+                                  self.object_track_Y[i] * K_CIRCULATION],
+                                 [self.object_track_X[i + 1] * K_CIRCULATION,
+                                  self.object_track_Y[i + 1] * K_CIRCULATION], 1)
 
 
 class Planet(BaseBody):
@@ -200,10 +201,9 @@ class Star:
         pygame.draw.circle(self.screen, center=(self.x * K_CIRCULATION, self.y * K_CIRCULATION),
                            radius=self.r_own * self.k_own, color=self.color)
 
+
 class Events:
-
-
-    def move_object_on_the_camera(self,obj):
+    def move_object_on_the_camera(self, obj):
         # Здесь заложено перемещение заданной сущности
         if keys[pygame.K_w]:
             obj.y += 10/K_CIRCULATION
@@ -225,6 +225,25 @@ class Events:
             for i in range(len(obj.object_track_X)):
                 obj.object_track_X[i] += 10 / K_CIRCULATION
 
+    def change_size(self):
+        global K_CIRCULATION, K_OWN
+        if keys[pygame.K_MINUS]:
+            K_OWN /= 1.25
+            K_CIRCULATION /= 1.25
+            for object in Track_list:
+                object.k_own /= 1.25
+                object.k_circulation /= 1.25
+            Sun.k_own /= 1.25
+            Sun.k_circulation /= 1.25
+
+        elif keys[pygame.K_EQUALS]:
+            K_OWN *= 1.25
+            K_CIRCULATION *= 1.25
+            for object in Track_list:
+                object.k_own *= 1.25
+                object.k_circulation *= 1.25
+            Sun.k_own *= 1.25
+            Sun.k_circulation *= 1.25
 
 
 # Инициализация окна, синхронизация со временем
@@ -299,6 +318,8 @@ while not finished:
             Event.move_object_on_the_camera(object)
         Event.move_object_on_the_camera(Sun)
 
+    elif keys[pygame.K_MINUS] or keys[pygame.K_EQUALS]:
+        Event.change_size()
     pygame.display.update()
 
 
