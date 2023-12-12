@@ -280,13 +280,13 @@ Earth = Planet(screen, color=(0, 0, 205))
 Mars = Planet(screen, m=6.39 * 10**29, r_own=3.3895 * 10**6, r_circulation=1.523*R_CIRCULATION_EARTH,
               k_own=K_OWN * 1.25, time=TIME, angle=1.0, color=(205, 133, 63))
 Jupiter = Planet(screen, m=1.898 * 10**27, r_own=69.911 * 10**6, r_circulation=5.203*R_CIRCULATION_EARTH,
-                 k_own=K_OWN/4.5, time=TIME, angle=0.8, color=(210, 105, 30))
+                 k_own=K_OWN/4.5, time=TIME, angle=5, color=(210, 105, 30))
 Saturn = Planet(screen, m=5.683 * 10**26, r_own=58.232 * 10**6, r_circulation=9.555*R_CIRCULATION_EARTH,
                 k_own=K_OWN/4, time=TIME, angle=0.6, color=(222, 184, 135))
 Uranus = Planet(screen, m=8.681 * 10**25, r_own=25.362 * 10**6, r_circulation=19.22*R_CIRCULATION_EARTH,
-                k_own=K_OWN/3.25, time=TIME, angle=0.4, color=(135, 206, 250))
+                k_own=K_OWN/3.25, time=TIME, angle=4, color=(135, 206, 250))
 Neptune = Planet(screen, m=1.024 * 10**26, r_own=24.622 * 10**6, r_circulation=30.11*R_CIRCULATION_EARTH,
-                 k_own=K_OWN/3.25, time=TIME, angle=0.2, color=(65, 105, 225))
+                 k_own=K_OWN/3.25, time=TIME, angle=1, color=(65, 105, 225))
 # список из всех планет
 Planets = [Mercury, Venus, Earth, Mars, Jupiter, Saturn, Uranus, Neptune]
 
