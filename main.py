@@ -6,7 +6,7 @@ import math
 FPS = 30
 
 # Цвета игры
-BLUE = (55, 105, 235)
+BLUE = (90, 139, 207)
 YELLOW = (255, 205, 0)
 GREEN = (34, 139, 34)
 BLACK = (0, 0, 0)
@@ -39,9 +39,9 @@ dt = 500
 
 class BaseBody:
     """ Класс BaseBody
-    описывает тела, движущиеся в системе звезды по различным орбитам.
+    описывает тела, движущиеся в системе звезды по различным траекториям.
     """
-    def __init__(self, screen, angle=0.0, m=M_EARTH,
+    def __init__(self, scr, angle=0.0, m=M_EARTH,
                  r_own=R_OWN_EARTH, r_circulation=R_CIRCULATION_EARTH, color=BLUE,
                  k_own=K_OWN, k_circulation=K_CIRCULATION, time=TIME, v=0):
         """ Конструктор класса BaseBody
@@ -62,7 +62,7 @@ class BaseBody:
         ax - начальное ускорение тела по горизонтали
         ay - начальное ускорение тела по вертикали
         """
-        self.screen = screen
+        self.screen = scr
         self.r_own, self.k_own, self.k_circulation, self.time = r_own, k_own, k_circulation, time
         self.color, self.r_circulation = color, r_circulation
         if v == 0:
@@ -70,6 +70,7 @@ class BaseBody:
         self.vx, self.vy = -1 * v * math.sin(angle), v * math.cos(angle)
         self.m = m
         self.x, self.y = Sun.x + self.r_circulation * math.cos(angle), Sun.y + self.r_circulation * math.sin(angle)
+        self.angle = angle
         self.ax, self.ay = 0, 0
         self.acceleration()
         self.tick = 0  # переменная для подсчёта количество выполненных циклов и перевод их в дни и годы
@@ -138,11 +139,11 @@ class Voyager(BaseBody):
         self.angle = math.atan2(self.y - Sun.y, self.x - Sun.x)
         self.ax = -1 * a_sun_perpendicular * math.cos(self.angle)
         self.ay = -1 * a_sun_perpendicular * math.sin(self.angle)
-        for plaret in Planets:
-            self.ax += (G * plaret.m / (math.sqrt((plaret.x - self.x) ** 2 + (plaret.y - self.y) ** 2)) ** 3 *
-                        (plaret.x - self.x))
-            self.ay += (G * plaret.m / (math.sqrt((plaret.x - self.x) ** 2 + (plaret.y - self.y) ** 2)) ** 3 *
-                        (plaret.y - self.y))
+        for planet in Planets:
+            self.ax += (G * planet.m / (math.sqrt((planet.x - self.x) ** 2 + (planet.y - self.y) ** 2)) ** 3 *
+                        (planet.x - self.x))
+            self.ay += (G * planet.m / (math.sqrt((planet.x - self.x) ** 2 + (planet.y - self.y) ** 2)) ** 3 *
+                        (planet.y - self.y))
 
     def draw_information(self):
         self.tick += 1
@@ -176,7 +177,7 @@ class Voyager(BaseBody):
 class Star:
     # Нужны для отрисовки трека при движении камеры
 
-    def __init__(self, screen, x=WIDTH/2 / K_CIRCULATION, y=HEIGHT/2 / K_CIRCULATION, r_own=R_OWN_SUN,
+    def __init__(self, scr, x=WIDTH/2 / K_CIRCULATION, y=HEIGHT/2 / K_CIRCULATION, r_own=R_OWN_SUN,
                  color=YELLOW, m=M_SUN, k_own=K_OWN, k_circulation=K_CIRCULATION):
         """ Конструктор класса Star
         Args:
@@ -188,7 +189,7 @@ class Star:
         k_own - коэффициент увеличения размеров тела
         k_circulation - коэффициент увеличения расстояния от тела до звезды
         """
-        self.screen = screen
+        self.screen = scr
         self.x, self.y, self.m = x, y, m
         self.r_own, self.k_own, self.k_circulation = r_own, k_own, k_circulation
         self.color = color
@@ -202,48 +203,64 @@ class Star:
                            radius=self.r_own * self.k_own, color=self.color)
 
 
-class Events:
-    def move_object_on_the_camera(self, obj):
-        # Здесь заложено перемещение заданной сущности
-        if keys[pygame.K_w]:
-            obj.y += 10/K_CIRCULATION
-            for i in range(len(obj.object_track_X)):
-                obj.object_track_Y[i] += 10 / K_CIRCULATION
+def move_object_on_the_camera():
+    # Здесь заложено перемещение заданной сущности
+    if keys[pygame.K_w]:
+        for elem in Track_list:
+            elem.y += 10/K_CIRCULATION
+            for i in range(len(elem.object_track_X)):
+                elem.object_track_Y[i] += 10 / K_CIRCULATION
+        Sun.y += 10 / K_CIRCULATION
+        for i in range(len(Sun.object_track_X)):
+            Sun.object_track_Y[i] += 10 / K_CIRCULATION
 
-        if keys[pygame.K_s]:
-            obj.y -= 10/K_CIRCULATION
-            for i in range(len(obj.object_track_X)):
-                obj.object_track_Y[i] -= 10 / K_CIRCULATION
+    if keys[pygame.K_s]:
+        for elem in Track_list:
+            elem.y -= 10/K_CIRCULATION
+            for i in range(len(elem.object_track_X)):
+                elem.object_track_Y[i] -= 10 / K_CIRCULATION
+        Sun.y -= 10 / K_CIRCULATION
+        for i in range(len(Sun.object_track_X)):
+            Sun.object_track_Y[i] -= 10 / K_CIRCULATION
 
-        if keys[pygame.K_d]:
-            obj.x -= 10/K_CIRCULATION
-            for i in range(len(obj.object_track_X)):
-                obj.object_track_X[i] -= 10 / K_CIRCULATION
+    if keys[pygame.K_d]:
+        for elem in Track_list:
+            elem.x -= 10/K_CIRCULATION
+            for i in range(len(elem.object_track_X)):
+                elem.object_track_X[i] -= 10 / K_CIRCULATION
+        Sun.x -= 10 / K_CIRCULATION
+        for i in range(len(Sun.object_track_X)):
+            Sun.object_track_X[i] -= 10 / K_CIRCULATION
 
-        if keys[pygame.K_a]:
-            obj.x += 10/K_CIRCULATION
-            for i in range(len(obj.object_track_X)):
-                obj.object_track_X[i] += 10 / K_CIRCULATION
+    if keys[pygame.K_a]:
+        for elem in Track_list:
+            elem.x += 10/K_CIRCULATION
+            for i in range(len(elem.object_track_X)):
+                elem.object_track_X[i] += 10 / K_CIRCULATION
+        Sun.x += 10 / K_CIRCULATION
+        for i in range(len(Sun.object_track_X)):
+            Sun.object_track_X[i] += 10 / K_CIRCULATION
 
-    def change_size(self):
-        global K_CIRCULATION, K_OWN
-        if keys[pygame.K_MINUS]:
-            K_OWN /= 1.25
-            K_CIRCULATION /= 1.25
-            for object in Track_list:
-                object.k_own /= 1.25
-                object.k_circulation /= 1.25
-            Sun.k_own /= 1.25
-            Sun.k_circulation /= 1.25
 
-        elif keys[pygame.K_EQUALS]:
-            K_OWN *= 1.25
-            K_CIRCULATION *= 1.25
-            for object in Track_list:
-                object.k_own *= 1.25
-                object.k_circulation *= 1.25
-            Sun.k_own *= 1.25
-            Sun.k_circulation *= 1.25
+def change_size():
+    global K_CIRCULATION, K_OWN
+    if keys[pygame.K_MINUS]:
+        K_OWN /= 1.25
+        K_CIRCULATION /= 1.25
+        for elem in Track_list:
+            elem.k_own /= 1.25
+            elem.k_circulation /= 1.25
+        Sun.k_own /= 1.25
+        Sun.k_circulation /= 1.25
+
+    if keys[pygame.K_EQUALS]:
+        K_OWN *= 1.25
+        K_CIRCULATION *= 1.25
+        for elem in Track_list:
+            elem.k_own *= 1.25
+            elem.k_circulation *= 1.25
+        Sun.k_own *= 1.25
+        Sun.k_circulation *= 1.25
 
 
 # Инициализация окна, синхронизация со временем
@@ -253,31 +270,30 @@ screen = pygame.display.set_mode((WIDTH, HEIGHT))
 clock = pygame.time.Clock()
 
 # Инициализация Солнца
-Event = Events()
-Sun = Star(screen, k_own=K_OWN / 15)
+Sun = Star(screen, k_own=K_OWN / 5)
 # Инициализация планет солнечной системы
 Mercury = Planet(screen, m=3.3 * 10**23, r_own=2.4397 * 10**6, r_circulation=0.387*R_CIRCULATION_EARTH,
-                 k_own=K_OWN * 1.25, time=TIME, angle=1.4)
+                 k_own=K_OWN * 1.25, time=TIME, angle=1.4, color=(188, 143, 143))
 Venus = Planet(screen, m=4.87 * 10**24, r_own=6.0518 * 10**6, r_circulation=0.723*R_CIRCULATION_EARTH,
-               time=TIME, angle=1.2)
-Earth = Planet(screen)
-Mars = Planet(screen, m=6.39 * 10**23, r_own=3.3895 * 10**6, r_circulation=1.523*R_CIRCULATION_EARTH,
-              k_own=K_OWN * 1.25, time=TIME, angle=1.0)
+               time=TIME, angle=1.2, color=(245, 222, 179))
+Earth = Planet(screen, color=(0, 0, 205))
+Mars = Planet(screen, m=6.39 * 10**29, r_own=3.3895 * 10**6, r_circulation=1.523*R_CIRCULATION_EARTH,
+              k_own=K_OWN * 1.25, time=TIME, angle=1.0, color=(205, 133, 63))
 Jupiter = Planet(screen, m=1.898 * 10**27, r_own=69.911 * 10**6, r_circulation=5.203*R_CIRCULATION_EARTH,
-                 k_own=K_OWN/4, time=TIME, angle=0.8)
+                 k_own=K_OWN/4.5, time=TIME, angle=0.8, color=(210, 105, 30))
 Saturn = Planet(screen, m=5.683 * 10**26, r_own=58.232 * 10**6, r_circulation=9.555*R_CIRCULATION_EARTH,
-                k_own=K_OWN/3.75, time=TIME, angle=0.6)
+                k_own=K_OWN/4, time=TIME, angle=0.6, color=(222, 184, 135))
 Uranus = Planet(screen, m=8.681 * 10**25, r_own=25.362 * 10**6, r_circulation=19.22*R_CIRCULATION_EARTH,
-                k_own=K_OWN/3.25, time=TIME, angle=0.4)
+                k_own=K_OWN/3.25, time=TIME, angle=0.4, color=(135, 206, 250))
 Neptune = Planet(screen, m=1.024 * 10**26, r_own=24.622 * 10**6, r_circulation=30.11*R_CIRCULATION_EARTH,
-                 k_own=K_OWN/3.25, time=TIME, angle=0.2)
+                 k_own=K_OWN/3.25, time=TIME, angle=0.2, color=(65, 105, 225))
 # список из всех планет
 Planets = [Mercury, Venus, Earth, Mars, Jupiter, Saturn, Uranus, Neptune]
 
 # Инициализация объекта, совершающего гравитационный манёвр
-voyager = Voyager(screen, color=WHITE, angle=0.01, r_own=100, k_own=K_OWN * 10**4 * 4, v=34000)
+voyager = Voyager(screen, color=WHITE, angle=0.01, r_own=100, k_own=K_OWN * 10**4 * 5, v=34000)
 
-# Список всех тел, чей трек мы хотим видеть (!ВАЖНО если это будет новый класс, у него должны присутсвовать
+# Список всех тел, чей трек мы хотим видеть (!ВАЖНО если это будет новый класс, у него должны быть
 # self.object_track_X = [] self.object_track_Y = [])
 Track_list = [voyager, Mercury, Venus, Earth, Mars, Jupiter, Saturn, Uranus, Neptune]
 
@@ -296,9 +312,9 @@ while not finished:
     voyager.draw_information()
 
     # Отрисовка трека
-    for object in Track_list:
-        object.object_track_write()
-        object.object_track_draw()
+    for obj in Track_list:
+        obj.object_track_write()
+        obj.object_track_draw()
 
     # Движение тел
     (Mercury.move(), Venus.move(), Earth.move(), Mars.move(),
@@ -314,12 +330,10 @@ while not finished:
 
     keys = pygame.key.get_pressed()
     if keys[pygame.K_d] or keys[pygame.K_a] or keys[pygame.K_w] or keys[pygame.K_s]:
-        for object in Track_list:
-            Event.move_object_on_the_camera(object)
-        Event.move_object_on_the_camera(Sun)
+        move_object_on_the_camera()
 
     elif keys[pygame.K_MINUS] or keys[pygame.K_EQUALS]:
-        Event.change_size()
+        change_size()
     pygame.display.update()
 
 
