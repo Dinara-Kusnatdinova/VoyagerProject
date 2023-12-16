@@ -34,7 +34,7 @@ R_START = 0
 TIME = 288 * 10**3
 
 # Время одной итерации в с
-dt = 500
+dt = 2000
 
 
 class BaseBody:
@@ -89,12 +89,12 @@ class BaseBody:
         Метод описывает перемещение тела за один кадр перерисовки. То есть, обновляет значения
         self.x и self.y с учетом скоростей self.vx и self.vy.
         """
-        for t in range(0, TIME, dt):
+        for t in range(0, TIME, 10*dt):
             self.acceleration()
-            self.vx -= self.ax * dt
-            self.vy -= self.ay * dt
-            self.x -= self.vx * dt
-            self.y -= self.vy * dt
+            self.vx -= self.ax * 10*dt
+            self.vy -= self.ay * 10*dt
+            self.x -= self.vx * 10*dt
+            self.y -= self.vy * 10*dt
 
     def draw(self):
         """Рисует тело по прошествии единицы времени.
@@ -133,6 +133,14 @@ class Voyager(BaseBody):
     """ Класс Voyager
     описывает тело, совершающее гравитационный манёвр.
     """
+
+    def move(self):
+        for t in range(0, TIME, dt):
+            self.acceleration()
+            self.vx -= self.ax * dt
+            self.vy -= self.ay * dt
+            self.x -= self.vx * dt
+            self.y -= self.vy * dt
 
     def acceleration(self):
         a_sun_perpendicular = G * M_SUN / ((self.x - Sun.x) ** 2 + (self.y - Sun.y) ** 2)
@@ -211,8 +219,6 @@ def move_object_on_the_camera():
             for i in range(len(elem.object_track_X)):
                 elem.object_track_Y[i] += 10 / K_CIRCULATION
         Sun.y += 10 / K_CIRCULATION
-        for i in range(len(Sun.object_track_X)):
-            Sun.object_track_Y[i] += 10 / K_CIRCULATION
 
     if keys[pygame.K_s]:
         for elem in Track_list:
@@ -220,8 +226,6 @@ def move_object_on_the_camera():
             for i in range(len(elem.object_track_X)):
                 elem.object_track_Y[i] -= 10 / K_CIRCULATION
         Sun.y -= 10 / K_CIRCULATION
-        for i in range(len(Sun.object_track_X)):
-            Sun.object_track_Y[i] -= 10 / K_CIRCULATION
 
     if keys[pygame.K_d]:
         for elem in Track_list:
@@ -229,8 +233,6 @@ def move_object_on_the_camera():
             for i in range(len(elem.object_track_X)):
                 elem.object_track_X[i] -= 10 / K_CIRCULATION
         Sun.x -= 10 / K_CIRCULATION
-        for i in range(len(Sun.object_track_X)):
-            Sun.object_track_X[i] -= 10 / K_CIRCULATION
 
     if keys[pygame.K_a]:
         for elem in Track_list:
@@ -238,9 +240,6 @@ def move_object_on_the_camera():
             for i in range(len(elem.object_track_X)):
                 elem.object_track_X[i] += 10 / K_CIRCULATION
         Sun.x += 10 / K_CIRCULATION
-        for i in range(len(Sun.object_track_X)):
-            Sun.object_track_X[i] += 10 / K_CIRCULATION
-
 
 def change_size():
     global K_CIRCULATION, K_OWN
@@ -252,6 +251,14 @@ def change_size():
             elem.k_circulation /= 1.25
         Sun.k_own /= 1.25
         Sun.k_circulation /= 1.25
+        for elem in Track_list:
+            elem.x += WIDTH*(0.100)/ K_CIRCULATION
+            elem.y += HEIGHT*(0.100)/ K_CIRCULATION
+            for i in range(len(elem.object_track_X)):
+                elem.object_track_X[i] += WIDTH*0.1/ K_CIRCULATION
+                elem.object_track_Y[i] += HEIGHT*0.1/ K_CIRCULATION
+        Sun.x += WIDTH*0.1/ K_CIRCULATION
+        Sun.y += HEIGHT*0.1/ K_CIRCULATION
 
     if keys[pygame.K_EQUALS]:
         K_OWN *= 1.25
@@ -261,6 +268,14 @@ def change_size():
             elem.k_circulation *= 1.25
         Sun.k_own *= 1.25
         Sun.k_circulation *= 1.25
+        for elem in Track_list:
+            elem.x -= WIDTH * 0.125/ K_CIRCULATION
+            elem.y -= HEIGHT * 0.125/ K_CIRCULATION
+            for i in range(len(elem.object_track_X)):
+                elem.object_track_X[i] -= WIDTH * 0.125/ K_CIRCULATION
+                elem.object_track_Y[i] -= HEIGHT * 0.125/ K_CIRCULATION
+        Sun.x -= WIDTH * 0.125/ K_CIRCULATION
+        Sun.y -= HEIGHT * 0.125/ K_CIRCULATION
 
 
 # Инициализация окна, синхронизация со временем
@@ -277,10 +292,10 @@ Mercury = Planet(screen, m=3.3 * 10**23, r_own=2.4397 * 10**6, r_circulation=0.3
 Venus = Planet(screen, m=4.87 * 10**24, r_own=6.0518 * 10**6, r_circulation=0.723*R_CIRCULATION_EARTH,
                time=TIME, angle=1.2, color=(245, 222, 179))
 Earth = Planet(screen, color=(0, 0, 205))
-Mars = Planet(screen, m=6.39 * 10**29, r_own=3.3895 * 10**6, r_circulation=1.523*R_CIRCULATION_EARTH,
+Mars = Planet(screen, m=6.39 * 10**23, r_own=3.3895 * 10**6, r_circulation=1.523*R_CIRCULATION_EARTH,
               k_own=K_OWN * 1.25, time=TIME, angle=1.0, color=(205, 133, 63))
 Jupiter = Planet(screen, m=1.898 * 10**27, r_own=69.911 * 10**6, r_circulation=5.203*R_CIRCULATION_EARTH,
-                 k_own=K_OWN/4.5, time=TIME, angle=5, color=(210, 105, 30))
+                 k_own=K_OWN/4.5, time=TIME, angle=4.9, color=(210, 105, 30))
 Saturn = Planet(screen, m=5.683 * 10**26, r_own=58.232 * 10**6, r_circulation=9.555*R_CIRCULATION_EARTH,
                 k_own=K_OWN/4, time=TIME, angle=0.6, color=(222, 184, 135))
 Uranus = Planet(screen, m=8.681 * 10**25, r_own=25.362 * 10**6, r_circulation=19.22*R_CIRCULATION_EARTH,
@@ -291,7 +306,7 @@ Neptune = Planet(screen, m=1.024 * 10**26, r_own=24.622 * 10**6, r_circulation=3
 Planets = [Mercury, Venus, Earth, Mars, Jupiter, Saturn, Uranus, Neptune]
 
 # Инициализация объекта, совершающего гравитационный манёвр
-voyager = Voyager(screen, color=WHITE, angle=0.01, r_own=100, k_own=K_OWN * 10**4 * 5, v=34000)
+voyager = Voyager(screen, color=WHITE, angle=0.01, r_own=100, k_own=K_OWN * 10**4 * 5, v=42000)
 
 # Список всех тел, чей трек мы хотим видеть (!ВАЖНО если это будет новый класс, у него должны быть
 # self.object_track_X = [] self.object_track_Y = [])
