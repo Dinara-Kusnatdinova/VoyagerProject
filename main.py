@@ -2,7 +2,6 @@ import pygame
 from ctypes import windll
 import math
 
-
 FPS = 30
 
 # Цвета игры
@@ -17,21 +16,21 @@ SPACE = (25, 25, 62)
 WIDTH, HEIGHT = windll.user32.GetSystemMetrics(0) - 10, windll.user32.GetSystemMetrics(1) - 80
 
 # Физические константы в СИ
-G = 6.6743 / 10**11
-M_SUN = 1.9885 * 10**30
-R_OWN_SUN = 100.34 * 10**6
-M_EARTH = 5.9742 * 10**24
-R_CIRCULATION_EARTH = 1.49598 * 10**11
-R_OWN_EARTH = 6.371 * 10**6
-V_ORBITAL_EARTH = 4 * 10**4
+G = 6.6743 / 10 ** 11
+M_SUN = 1.9885 * 10 ** 30
+R_OWN_SUN = 100.34 * 10 ** 6
+M_EARTH = 5.9742 * 10 ** 24
+R_CIRCULATION_EARTH = 1.49598 * 10 ** 11
+R_OWN_EARTH = 6.371 * 10 ** 6
+V_ORBITAL_EARTH = 4 * 10 ** 4
 V_OWN_ROTATION_EARTH = 465.1013  # на экваторе
 # Масштабные коэффициенты (могут меняться для каждого тела); коэффициент увелечения скорости:
 # увеличение линейного размера тел, увеличение расстояния между телами; коэффициент увелечения скорости
-K_OWN, K_CIRCULATION = 1 / 10**6 / 2, 1 / 10**10/0.3
+K_OWN, K_CIRCULATION, K_CIRCULATION_START = 1 / 10 ** 6 / 2, 1 / 10 ** 10 / 0.3, 1 / 10 ** 10 / 0.3
 # Радиус удаления от Солнца. Нужен, чтобы отдалить планеты от звезды, противодействует слипанию
 R_START = 0
 # Время в с, за которое сменяется кадр
-TIME = 288 * 10**3
+TIME = 288 * 10 ** 3
 
 # Время одной итерации в с
 dt = 2000
@@ -41,6 +40,7 @@ class BaseBody:
     """ Класс BaseBody
     описывает тела, движущиеся в системе звезды по различным траекториям.
     """
+
     def __init__(self, scr, angle=0.0, m=M_EARTH,
                  r_own=R_OWN_EARTH, r_circulation=R_CIRCULATION_EARTH, color=BLUE,
                  k_own=K_OWN, k_circulation=K_CIRCULATION, time=TIME, v=0):
@@ -89,12 +89,12 @@ class BaseBody:
         Метод описывает перемещение тела за один кадр перерисовки. То есть, обновляет значения
         self.x и self.y с учетом скоростей self.vx и self.vy.
         """
-        for t in range(0, TIME, 10*dt):
+        for t in range(0, TIME, 10 * dt):
             self.acceleration()
-            self.vx -= self.ax * 10*dt
-            self.vy -= self.ay * 10*dt
-            self.x -= self.vx * 10*dt
-            self.y -= self.vy * 10*dt
+            self.vx -= self.ax * 10 * dt
+            self.vy -= self.ay * 10 * dt
+            self.x -= self.vx * 10 * dt
+            self.y -= self.vy * 10 * dt
 
     def draw(self):
         """Рисует тело по прошествии единицы времени.
@@ -126,7 +126,11 @@ class Planet(BaseBody):
     """ Класс Planet
     задаёт тела, движущиеся в системе звезды по орбитам, близким к круговым.
     """
-    pass
+    def __init__(self, scr, angle=0.0, m=M_EARTH,
+                 r_own=R_OWN_EARTH, r_circulation=R_CIRCULATION_EARTH, color=BLUE,
+                 k_own=K_OWN, k_circulation=K_CIRCULATION, time=TIME, v=0):
+        super().__init__(scr, angle, m, r_own, r_circulation, color, k_own, k_circulation, time, v)
+        self.auto_zoomer = False
 
 
 class Voyager(BaseBody):
@@ -171,7 +175,7 @@ class Voyager(BaseBody):
         else:
             text1 = f1.render(f'прошло {str(day)} дней',
                               1, (255, 255, 255))
-        text2 = f1.render('скорость Вояджера ' + str(round(math.sqrt(self.vx**2 + self.vy**2) / 1000, 2)) + ' км/с',
+        text2 = f1.render('скорость Вояджера ' + str(round(math.sqrt(self.vx ** 2 + self.vy ** 2) / 1000, 2)) + ' км/с',
                           1, (255, 255, 255))
         text3 = f1.render('расстояние от Вояджера до Солнца ' +
                           str(round(math.sqrt((self.x - Sun.x) ** 2 +
@@ -183,9 +187,7 @@ class Voyager(BaseBody):
 
 
 class Star:
-    # Нужны для отрисовки трека при движении камеры
-
-    def __init__(self, scr, x=WIDTH/2 / K_CIRCULATION, y=HEIGHT/2 / K_CIRCULATION, r_own=R_OWN_SUN,
+    def __init__(self, scr, x=WIDTH / 2 / K_CIRCULATION, y=HEIGHT / 2 / K_CIRCULATION, r_own=R_OWN_SUN,
                  color=YELLOW, m=M_SUN, k_own=K_OWN, k_circulation=K_CIRCULATION):
         """ Конструктор класса Star
         Args:
@@ -203,6 +205,7 @@ class Star:
         self.color = color
         self.object_track_X = []
         self.object_track_Y = []
+        self.auto_zoomer = True
 
     def draw(self):
         """ Метод отрисовки звезды. Обновляет положение тела на экране с учетом self.x и self.y.
@@ -215,67 +218,94 @@ def move_object_on_the_camera():
     # Здесь заложено перемещение заданной сущности
     if keys[pygame.K_w]:
         for elem in Track_list:
-            elem.y += 10/K_CIRCULATION
+            elem.y += 10 / K_CIRCULATION
             for i in range(len(elem.object_track_X)):
                 elem.object_track_Y[i] += 10 / K_CIRCULATION
         Sun.y += 10 / K_CIRCULATION
 
     if keys[pygame.K_s]:
         for elem in Track_list:
-            elem.y -= 10/K_CIRCULATION
+            elem.y -= 10 / K_CIRCULATION
             for i in range(len(elem.object_track_X)):
                 elem.object_track_Y[i] -= 10 / K_CIRCULATION
         Sun.y -= 10 / K_CIRCULATION
 
     if keys[pygame.K_d]:
         for elem in Track_list:
-            elem.x -= 10/K_CIRCULATION
+            elem.x -= 10 / K_CIRCULATION
             for i in range(len(elem.object_track_X)):
                 elem.object_track_X[i] -= 10 / K_CIRCULATION
         Sun.x -= 10 / K_CIRCULATION
 
     if keys[pygame.K_a]:
         for elem in Track_list:
-            elem.x += 10/K_CIRCULATION
+            elem.x += 10 / K_CIRCULATION
             for i in range(len(elem.object_track_X)):
                 elem.object_track_X[i] += 10 / K_CIRCULATION
         Sun.x += 10 / K_CIRCULATION
 
-def change_size():
-    global K_CIRCULATION, K_OWN
-    if keys[pygame.K_MINUS]:
-        K_OWN /= 1.25
-        K_CIRCULATION /= 1.25
-        for elem in Track_list:
-            elem.k_own /= 1.25
-            elem.k_circulation /= 1.25
-        Sun.k_own /= 1.25
-        Sun.k_circulation /= 1.25
-        for elem in Track_list:
-            elem.x += WIDTH*(0.100)/ K_CIRCULATION
-            elem.y += HEIGHT*(0.100)/ K_CIRCULATION
-            for i in range(len(elem.object_track_X)):
-                elem.object_track_X[i] += WIDTH*0.1/ K_CIRCULATION
-                elem.object_track_Y[i] += HEIGHT*0.1/ K_CIRCULATION
-        Sun.x += WIDTH*0.1/ K_CIRCULATION
-        Sun.y += HEIGHT*0.1/ K_CIRCULATION
 
-    if keys[pygame.K_EQUALS]:
-        K_OWN *= 1.25
-        K_CIRCULATION *= 1.25
+def change_size(k=1.25, auto_little=False, auto_bigger=False):
+    global K_CIRCULATION, K_OWN
+    if keys[pygame.K_MINUS] or auto_little:
+        K_OWN /= k
+        K_CIRCULATION /= k
         for elem in Track_list:
-            elem.k_own *= 1.25
-            elem.k_circulation *= 1.25
-        Sun.k_own *= 1.25
-        Sun.k_circulation *= 1.25
+            elem.k_own /= k
+            elem.k_circulation /= k
+        Sun.k_own /= k
+        Sun.k_circulation /= k
         for elem in Track_list:
-            elem.x -= WIDTH * 0.125/ K_CIRCULATION
-            elem.y -= HEIGHT * 0.125/ K_CIRCULATION
+            elem.x += WIDTH * 0.100 / K_CIRCULATION
+            elem.y += HEIGHT * 0.100 / K_CIRCULATION
             for i in range(len(elem.object_track_X)):
-                elem.object_track_X[i] -= WIDTH * 0.125/ K_CIRCULATION
-                elem.object_track_Y[i] -= HEIGHT * 0.125/ K_CIRCULATION
-        Sun.x -= WIDTH * 0.125/ K_CIRCULATION
-        Sun.y -= HEIGHT * 0.125/ K_CIRCULATION
+                elem.object_track_X[i] += WIDTH * 0.1 / K_CIRCULATION
+                elem.object_track_Y[i] += HEIGHT * 0.1 / K_CIRCULATION
+        Sun.x += WIDTH * 0.1 / K_CIRCULATION
+        Sun.y += HEIGHT * 0.1 / K_CIRCULATION
+
+    if keys[pygame.K_EQUALS] or auto_bigger:
+        K_OWN *= k
+        K_CIRCULATION *= k
+        for elem in Track_list:
+            elem.k_own *= k
+            elem.k_circulation *= k
+        Sun.k_own *= k
+        Sun.k_circulation *= k
+        for elem in Track_list:
+            elem.x -= WIDTH * 0.125 / K_CIRCULATION
+            elem.y -= HEIGHT * 0.125 / K_CIRCULATION
+            for i in range(len(elem.object_track_X)):
+                elem.object_track_X[i] -= WIDTH * 0.125 / K_CIRCULATION
+                elem.object_track_Y[i] -= HEIGHT * 0.125 / K_CIRCULATION
+        Sun.x -= WIDTH * 0.125 / K_CIRCULATION
+        Sun.y -= HEIGHT * 0.125 / K_CIRCULATION
+
+
+def auto_zoom(planet, change_radius=True):
+    global TIME, dt
+    planet.auto_zoomer = True
+    delta_x = (WIDTH / 2) / K_CIRCULATION - planet.x
+    delta_y = (HEIGHT / 2) / K_CIRCULATION - planet.y
+    for elem in Track_list:
+        elem.x += delta_x
+        for i in range(len(elem.object_track_X)):
+            elem.object_track_X[i] += delta_x
+    Sun.x += delta_x
+    for elem in Track_list:
+        elem.y += delta_y
+        for i in range(len(elem.object_track_X)):
+            elem.object_track_Y[i] += delta_y
+    Sun.y += delta_y
+    if 1 / K_CIRCULATION > 5 * 10 ** 7 and change_radius:
+        change_size(auto_bigger=True)
+    if planet.r_own > 500000:
+        planet.r_own *= 0.75
+    if voyager.r_own > 10:
+        voyager.r_own *= 0.75
+    if TIME > 18 * 10 ** 3:
+        TIME = int(TIME * 0.75)
+        dt = int(dt * 0.75)
 
 
 # Инициализация окна, синхронизация со временем
@@ -287,26 +317,26 @@ clock = pygame.time.Clock()
 # Инициализация Солнца
 Sun = Star(screen, k_own=K_OWN / 5)
 # Инициализация планет солнечной системы
-Mercury = Planet(screen, m=3.3 * 10**23, r_own=2.4397 * 10**6, r_circulation=0.387*R_CIRCULATION_EARTH,
-                 k_own=K_OWN * 1.25, time=TIME, angle=1.4, color=(188, 143, 143))
-Venus = Planet(screen, m=4.87 * 10**24, r_own=6.0518 * 10**6, r_circulation=0.723*R_CIRCULATION_EARTH,
+Mercury = Planet(screen, m=3.3 * 10 ** 23, r_circulation=0.387 * R_CIRCULATION_EARTH,
+                 time=TIME, angle=1.4, color=(188, 143, 143))
+Venus = Planet(screen, m=4.87 * 10 ** 24, r_circulation=0.723 * R_CIRCULATION_EARTH,
                time=TIME, angle=1.2, color=(245, 222, 179))
 Earth = Planet(screen, color=(0, 0, 205))
-Mars = Planet(screen, m=6.39 * 10**23, r_own=3.3895 * 10**6, r_circulation=1.523*R_CIRCULATION_EARTH,
-              k_own=K_OWN * 1.25, time=TIME, angle=1.0, color=(205, 133, 63))
-Jupiter = Planet(screen, m=1.898 * 10**27, r_own=69.911 * 10**6, r_circulation=5.203*R_CIRCULATION_EARTH,
-                 k_own=K_OWN/4.5, time=TIME, angle=4.9, color=(210, 105, 30))
-Saturn = Planet(screen, m=5.683 * 10**26, r_own=58.232 * 10**6, r_circulation=9.555*R_CIRCULATION_EARTH,
-                k_own=K_OWN/4, time=TIME, angle=0.6, color=(222, 184, 135))
-Uranus = Planet(screen, m=8.681 * 10**25, r_own=25.362 * 10**6, r_circulation=19.22*R_CIRCULATION_EARTH,
-                k_own=K_OWN/3.25, time=TIME, angle=4, color=(135, 206, 250))
-Neptune = Planet(screen, m=1.024 * 10**26, r_own=24.622 * 10**6, r_circulation=30.11*R_CIRCULATION_EARTH,
-                 k_own=K_OWN/3.25, time=TIME, angle=1, color=(65, 105, 225))
+Mars = Planet(screen, m=6.39 * 10 ** 23, r_circulation=1.523 * R_CIRCULATION_EARTH,
+              time=TIME, angle=1.0, color=(205, 133, 63))
+Jupiter = Planet(screen, m=1.898 * 10 ** 27, r_circulation=5.203 * R_CIRCULATION_EARTH,
+                 time=TIME, angle=4.655, color=(210, 105, 30))
+Saturn = Planet(screen, m=5.683 * 10 ** 26, r_circulation=9.555 * R_CIRCULATION_EARTH,
+                time=TIME, angle=0.6, color=(222, 184, 135))
+Uranus = Planet(screen, m=8.681 * 10 ** 25, r_circulation=19.22 * R_CIRCULATION_EARTH,
+                time=TIME, angle=4, color=(135, 206, 250))
+Neptune = Planet(screen, m=1.024 * 10 ** 26, r_circulation=30.11 * R_CIRCULATION_EARTH,
+                 time=TIME, angle=1, color=(65, 105, 225))
 # список из всех планет
 Planets = [Mercury, Venus, Earth, Mars, Jupiter, Saturn, Uranus, Neptune]
 
 # Инициализация объекта, совершающего гравитационный манёвр
-voyager = Voyager(screen, color=WHITE, angle=0.01, r_own=100, k_own=K_OWN * 10**4 * 5, v=42000)
+voyager = Voyager(screen, color=WHITE, angle=0.01, r_own=100, k_own=K_OWN * 10 ** 4 * 5, v=42000)
 
 # Список всех тел, чей трек мы хотим видеть (!ВАЖНО если это будет новый класс, у него должны быть
 # self.object_track_X = [] self.object_track_Y = [])
@@ -349,7 +379,16 @@ while not finished:
 
     elif keys[pygame.K_MINUS] or keys[pygame.K_EQUALS]:
         change_size()
-    pygame.display.update()
 
+    for item in Track_list[5:]:
+        if (item.x - voyager.x) ** 2 + (item.y - voyager.y) ** 2 < 5 * 10**21:
+            auto_zoom(item)
+        elif item.auto_zoomer:
+            TIME = 288 * 10 ** 3
+            item.auto_zoomer = False
+            item.r_own, voyager.r_own = R_OWN_EARTH, 100
+            change_size(k=K_CIRCULATION_START/K_CIRCULATION, auto_bigger=True)
+            auto_zoom(Sun, change_radius=False)
+    pygame.display.update()
 
 pygame.quit()
