@@ -166,7 +166,7 @@ class Voyager(BaseBody):
         screen.blit(text2, (15, 50))
         screen.blit(text3, (15, 85))
 
-    def memorizeVT(self):
+    def memorize_vt(self):
         self.memoryV.append((self.vx**2+self.vy**2)**0.5/1000)
         self.memoryT.append(dt/(24*3600)+self.memoryT[-1])
 
@@ -371,7 +371,7 @@ while not finished:
          Jupiter.move(), Saturn.move(), Uranus.move(), Neptune.move())
         voyager.move()
         # Запись скорости и времени для графика
-        voyager.memorizeVT()
+        voyager.memorize_vt()
 
     # Синхронизация со временем
     clock.tick(FPS)
