@@ -31,6 +31,7 @@ K_OWN, K_CIRCULATION, K_CIRCULATION_START = 1 / 10 ** 6 / 2, 1 / 10 ** 10 / 0.3,
 R_START = 0
 # Время в с, за которое сменяется кадр
 TIME = 288 * 10 ** 3
+CHANGE_TIME = TIME//50
 
 # Время одной итерации в с
 dt = 2000
@@ -78,10 +79,10 @@ class BaseBody:
         self.object_track_Y = []
 
     def acceleration(self):
-        a_sun_perpendicular = G * M_SUN / ((self.x - Sun.x) ** 2 + (self.y - Sun.y) ** 2)
+        a_sun_acceleration = G * M_SUN / ((self.x - Sun.x) ** 2 + (self.y - Sun.y) ** 2)
         self.angle = math.atan2(self.y - Sun.y, self.x - Sun.x)
-        self.ax = -1 * a_sun_perpendicular * math.cos(self.angle)
-        self.ay = -1 * a_sun_perpendicular * math.sin(self.angle)
+        self.ax = -1 * a_sun_acceleration * math.cos(self.angle)
+        self.ay = -1 * a_sun_acceleration * math.sin(self.angle)
 
     def move(self):
         """Перемещает тело по прошествии единицы времени.
@@ -89,12 +90,11 @@ class BaseBody:
         Метод описывает перемещение тела за один кадр перерисовки. То есть, обновляет значения
         self.x и self.y с учетом скоростей self.vx и self.vy.
         """
-        for t in range(0, TIME, 10 * dt):
-            self.acceleration()
-            self.vx -= self.ax * 10 * dt
-            self.vy -= self.ay * 10 * dt
-            self.x -= self.vx * 10 * dt
-            self.y -= self.vy * 10 * dt
+        self.acceleration()
+        self.vx -= self.ax * dt
+        self.vy -= self.ay * dt
+        self.x -= self.vx * dt
+        self.y -= self.vy * dt
 
     def draw(self):
         """Рисует тело по прошествии единицы времени.
@@ -140,12 +140,11 @@ class Voyager(BaseBody):
     """
 
     def move(self):
-        for t in range(0, TIME, dt):
-            self.acceleration()
-            self.vx -= self.ax * dt
-            self.vy -= self.ay * dt
-            self.x -= self.vx * dt
-            self.y -= self.vy * dt
+        self.acceleration()
+        self.vx -= self.ax * dt
+        self.vy -= self.ay * dt
+        self.x -= self.vx * dt
+        self.y -= self.vy * dt
 
     def acceleration(self):
         a_sun_perpendicular = G * M_SUN / ((self.x - Sun.x) ** 2 + (self.y - Sun.y) ** 2)
@@ -159,9 +158,9 @@ class Voyager(BaseBody):
                         (planet.y - self.y))
 
     def draw_information(self):
-        self.tick += 1
-        year = int((self.tick * TIME) // (365.25 * 86400))
-        day = ((self.tick * TIME) // 86400) % 365
+        self.time += TIME
+        year = int(self.time // (365.25 * 86400))
+        day = (self.time // 86400) % 365
         f1 = pygame.font.Font(None, 36)
         if year > 1:
             if year > 4:
@@ -299,15 +298,15 @@ def auto_zoom(planet, change_radius=True, make_little=False):
             elem.object_track_Y[i] += delta_y
     Sun.y += delta_y
     if not make_little:
-        if 1 / K_CIRCULATION > 10 ** 7 and change_radius:
+        if 1 / K_CIRCULATION > 5 * 10 ** 7 and change_radius:
             change_size(auto_bigger=True)
-        if planet.r_own > 25000:
+        if planet.r_own > 125000:
             planet.r_own *= 0.82
-        if voyager.r_own > 0.5:
+        if voyager.r_own > 2.5:
             voyager.r_own *= 0.82
-        if TIME > 10 ** 3:
+        if TIME > 9 * 10 ** 3:
             TIME = int(TIME * 0.75)
-            dt = int(dt * 0.75)
+#            dt = int(dt * 0.75)
     else:
         if K_CIRCULATION > K_CIRCULATION_START and change_radius:
             change_size(auto_little=True)
@@ -317,7 +316,14 @@ def auto_zoom(planet, change_radius=True, make_little=False):
             voyager.r_own /= 0.82
         if TIME < 288 * 10 ** 3:
             TIME = int(TIME / 0.75)
-            dt = int(dt / 0.75)
+#            dt = int(dt / 0.75)
+
+def change_time():
+    global TIME, CHANGE_TIME
+    if keys[pygame.K_r]:
+        TIME += CHANGE_TIME
+    if keys[pygame.K_f]:
+        TIME -= CHANGE_TIME
 
 
 # Инициализация окна, синхронизация со временем
@@ -337,7 +343,7 @@ Earth = Planet(screen, color=(0, 0, 205))
 Mars = Planet(screen, m=6.39 * 10 ** 23, r_circulation=1.523 * R_CIRCULATION_EARTH,
               time=TIME, angle=1.0, color=(205, 133, 63))
 Jupiter = Planet(screen, m=1.898 * 10 ** 27, r_circulation=5.203 * R_CIRCULATION_EARTH,
-                 time=TIME, angle=4.65828, color=(210, 105, 30))
+                 time=TIME, angle=4.6575, color=(210, 105, 30))
 Saturn = Planet(screen, m=5.683 * 10 ** 26, r_circulation=9.555 * R_CIRCULATION_EARTH,
                 time=TIME, angle=0.6, color=(222, 184, 135))
 Uranus = Planet(screen, m=8.681 * 10 ** 25, r_circulation=19.22 * R_CIRCULATION_EARTH,
@@ -374,9 +380,10 @@ while not finished:
         obj.object_track_draw()
 
     # Движение тел
-    (Mercury.move(), Venus.move(), Earth.move(), Mars.move(),
-     Jupiter.move(), Saturn.move(), Uranus.move(), Neptune.move())
-    voyager.move()
+    for t in range(0, TIME, dt):
+        (Mercury.move(), Venus.move(), Earth.move(), Mars.move(),
+         Jupiter.move(), Saturn.move(), Uranus.move(), Neptune.move())
+        voyager.move()
     # Синхронизация со временем
     clock.tick(FPS)
 
@@ -395,13 +402,12 @@ while not finished:
     for item in Track_list[4:]:
         if (item.x - voyager.x) ** 2 + (item.y - voyager.y) ** 2 < 7.5 * 10**21:
             s = (item.x - voyager.x) ** 2 + (item.y - voyager.y) ** 2
-            if (item.distance_from_voyager_2 > s) and s < 5 * 10**20:
+            if (item.distance_from_voyager_2 > s) and s < 10**21:
                 auto_zoom(item)
-            elif (item.distance_from_voyager_2 < s) and s < 10**19:
-                auto_zoom(item)
-            elif (item.distance_from_voyager_2 < s) and s > 10**19:
+            elif item.distance_from_voyager_2 < s:
                 auto_zoom(item, make_little=True)
             item.distance_from_voyager_2 = s
+    change_time()
     pygame.display.update()
 
 pygame.quit()
