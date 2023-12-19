@@ -299,13 +299,13 @@ def auto_zoom(planet, change_radius=True, make_little=False):
             elem.object_track_Y[i] += delta_y
     Sun.y += delta_y
     if not make_little:
-        if 1 / K_CIRCULATION > 5 * 10 ** 7 and change_radius:
+        if 1 / K_CIRCULATION > 10 ** 7 and change_radius:
             change_size(auto_bigger=True)
-        if planet.r_own > 125000:
+        if planet.r_own > 25000:
             planet.r_own *= 0.82
-        if voyager.r_own > 2.5:
+        if voyager.r_own > 0.5:
             voyager.r_own *= 0.82
-        if TIME > 9 * 10 ** 3:
+        if TIME > 10 ** 3:
             TIME = int(TIME * 0.75)
             dt = int(dt * 0.75)
     else:
@@ -337,7 +337,7 @@ Earth = Planet(screen, color=(0, 0, 205))
 Mars = Planet(screen, m=6.39 * 10 ** 23, r_circulation=1.523 * R_CIRCULATION_EARTH,
               time=TIME, angle=1.0, color=(205, 133, 63))
 Jupiter = Planet(screen, m=1.898 * 10 ** 27, r_circulation=5.203 * R_CIRCULATION_EARTH,
-                 time=TIME, angle=4.6575, color=(210, 105, 30))
+                 time=TIME, angle=4.65828, color=(210, 105, 30))
 Saturn = Planet(screen, m=5.683 * 10 ** 26, r_circulation=9.555 * R_CIRCULATION_EARTH,
                 time=TIME, angle=0.6, color=(222, 184, 135))
 Uranus = Planet(screen, m=8.681 * 10 ** 25, r_circulation=19.22 * R_CIRCULATION_EARTH,
@@ -395,9 +395,11 @@ while not finished:
     for item in Track_list[4:]:
         if (item.x - voyager.x) ** 2 + (item.y - voyager.y) ** 2 < 7.5 * 10**21:
             s = (item.x - voyager.x) ** 2 + (item.y - voyager.y) ** 2
-            if (item.distance_from_voyager_2 > s) and s < 10**21:
+            if (item.distance_from_voyager_2 > s) and s < 5 * 10**20:
                 auto_zoom(item)
-            elif item.distance_from_voyager_2 < s:
+            elif (item.distance_from_voyager_2 < s) and s < 10**19:
+                auto_zoom(item)
+            elif (item.distance_from_voyager_2 < s) and s > 10**19:
                 auto_zoom(item, make_little=True)
             item.distance_from_voyager_2 = s
     pygame.display.update()
