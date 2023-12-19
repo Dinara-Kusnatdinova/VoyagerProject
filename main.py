@@ -1,6 +1,7 @@
 import pygame
 from ctypes import windll
 import math
+import matplotlib.pyplot as plt
 
 FPS = 30
 
@@ -77,6 +78,8 @@ class BaseBody:
         self.tick = 0  # переменная для подсчёта количество выполненных циклов и перевод их в дни и годы
         self.object_track_X = []
         self.object_track_Y = []
+        self.memoryV = [(self.vx**2+self.vy**2)**0.5/1000]
+        self.memoryT = [0]
 
     def acceleration(self):
         a_sun_acceleration = G * M_SUN / ((self.x - Sun.x) ** 2 + (self.y - Sun.y) ** 2)
@@ -184,6 +187,10 @@ class Voyager(BaseBody):
         screen.blit(text1, (15, 15))
         screen.blit(text2, (15, 50))
         screen.blit(text3, (15, 85))
+
+    def memorizeVT(self):
+        self.memoryV.append((self.vx**2+self.vy**2)**0.5/1000)
+        self.memoryT.append(dt/(24*3600)+self.memoryT[-1])
 
 
 class Star:
@@ -384,6 +391,9 @@ while not finished:
         (Mercury.move(), Venus.move(), Earth.move(), Mars.move(),
          Jupiter.move(), Saturn.move(), Uranus.move(), Neptune.move())
         voyager.move()
+        # Запись скорости и времени для графика
+        voyager.memorizeVT()
+
     # Синхронизация со временем
     clock.tick(FPS)
 
@@ -411,3 +421,10 @@ while not finished:
     pygame.display.update()
 
 pygame.quit()
+
+plt.plot(voyager.memoryT,voyager.memoryV)
+plt.xlabel('t, дни')
+plt.ylabel("V, км/с")
+plt.grid()
+plt.title("Зависимость Скорости от времени")
+plt.show()
