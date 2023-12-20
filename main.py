@@ -283,22 +283,27 @@ def auto_zoom(planet, change_radius=True, make_little=False):
             elem.object_track_Y[i] += delta_y
     Sun.y += delta_y
     if not make_little:
-        if 1 / K_CIRCULATION > 10 ** 7 and change_radius:
+        if (1 / K_CIRCULATION > 10 ** 7 and change_radius and
+                (150 < voyager.x * voyager.k_circulation < WIDTH - 150 and
+                 150 < voyager.y * voyager.k_circulation < HEIGHT - 150)):
             change_size(auto_bigger=True)
-        if planet.r_own > 25000:
-            planet.r_own *= 0.82
-        if voyager.r_own > 0.5:
-            voyager.r_own *= 0.82
+        if (50 > voyager.x * voyager.k_circulation or voyager.x * voyager.k_circulation > WIDTH - 100 or
+                50 > voyager.y * voyager.k_circulation or voyager.y * voyager.k_circulation > HEIGHT - 100):
+            change_size(auto_little=True)
+        if planet.r_own * planet.k_own > 5:
+            planet.k_own *= 0.82
+        if voyager.r_own * voyager.k_own > 5:
+            voyager.k_own *= 0.82
         if TIME > 10 ** 3:
             TIME = int(TIME * 0.75)
             dt = int(dt * 0.75)
     else:
         if K_CIRCULATION > K_CIRCULATION_START and change_radius:
             change_size(auto_little=True)
-        if planet.r_own < R_OWN_EARTH:
-            planet.r_own /= 0.82
-        if voyager.r_own < 100:
-            voyager.r_own /= 0.82
+        if planet.r_own * planet.k_own < 2:
+            planet.k_own /= 0.82
+        if voyager.r_own * voyager.k_own < 2:
+            voyager.k_own /= 0.82
         if TIME < 288 * 10 ** 3:
             TIME = int(TIME / 0.75)
             dt = int(dt / 0.75)
@@ -329,7 +334,7 @@ Earth = Planet(screen, color=(0, 0, 205))
 Mars = Planet(screen, m=6.39 * 10 ** 23, r_circulation=1.523 * R_CIRCULATION_EARTH,
               time=TIME, angle=1.0, color=(205, 133, 63))
 Jupiter = Planet(screen, m=1.898 * 10 ** 27, r_circulation=5.203 * R_CIRCULATION_EARTH,
-                 time=TIME, angle=4.5775, color=(210, 105, 30))
+                 time=TIME, angle=4.575, color=(210, 105, 30))
 Saturn = Planet(screen, m=5.683 * 10 ** 26, r_circulation=9.555 * R_CIRCULATION_EARTH,
                 time=TIME, angle=0.6, color=(222, 184, 135))
 Uranus = Planet(screen, m=8.681 * 10 ** 25, r_circulation=19.22 * R_CIRCULATION_EARTH,
@@ -395,7 +400,7 @@ while not finished:
                 auto_zoom(item)
             elif (item.distance_from_voyager_2 < s) and s < 10 ** 19:
                 auto_zoom(item)
-            elif (item.distance_from_voyager_2 < s) and s > 10 ** 19:
+            elif (item.distance_from_voyager_2 < s) and s > 10 ** 19 and item.auto_zoomer:
                 auto_zoom(item, make_little=True)
             item.distance_from_voyager_2 = s
     change_time()
