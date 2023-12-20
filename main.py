@@ -161,11 +161,14 @@ class Voyager(BaseBody):
                           str(round(math.sqrt((self.x - Sun.x) ** 2 +
                                               (self.y - Sun.y) ** 2) / R_CIRCULATION_EARTH, 2)) + ' а.е.',
                           1, (255, 255, 255))
-        text4 = f1.render(str(self.k_circulation / 1000) + 'м', 1, (255, 255, 255))
+        text4 = f1.render(str(round(150 / self.k_circulation / 1000, 0)) + 'км', 1, (255, 255, 255))
+        pygame.draw.line(screen, WHITE, [10, 550], [160, 550])
+        pygame.draw.line(screen, WHITE, [10, 545], [10, 555])
+        pygame.draw.line(screen, WHITE, [160, 545], [160, 555])
         screen.blit(text1, (15, 15))
         screen.blit(text2, (15, 50))
         screen.blit(text3, (15, 85))
-        screen.blit(text4, (15, 505))
+        screen.blit(text4, (15, 515))
 
     def memorize_vt(self):
         self.memoryV.append((self.vx**2+self.vy**2)**0.5/1000)
