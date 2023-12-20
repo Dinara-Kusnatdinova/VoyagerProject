@@ -394,7 +394,7 @@ while not finished:
         change_size()
 
     for item in Track_list[4:]:
-        if (item.x - voyager.x) ** 2 + (item.y - voyager.y) ** 2 < 7.5 * 10 ** 21:
+        if (item.x - voyager.x) ** 2 + (item.y - voyager.y) ** 2 < 7 * 10 ** 21:
             s = (item.x - voyager.x) ** 2 + (item.y - voyager.y) ** 2
             if (item.distance_from_voyager_2 > s) and s < 5 * 10 ** 20:
                 auto_zoom(item)
