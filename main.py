@@ -6,14 +6,12 @@ from allconstants import *
 # Масштабные коэффициенты (могут меняться для каждого тела); коэффициент увелечения скорости:
 # увеличение линейного размера тел, увеличение расстояния между телами; коэффициент увелечения скорости
 K_OWN, K_CIRCULATION, K_CIRCULATION_START = 1 / 10 ** 6 / 2, 1 / 10 ** 10 / 0.3, 1 / 10 ** 10 / 0.3
-# Радиус удаления от Солнца. Нужен, чтобы отдалить планеты от звезды, противодействует слипанию
-R_START = 0
 # Время в с, за которое сменяется кадр
 TIME = 288 * 10 ** 3
-CHANGE_TIME = TIME//50
+CHANGE_TIME = 5000
 
 # Время одной итерации в с
-dt = 2000
+dt = 500
 
 
 class BaseBody:
@@ -23,7 +21,7 @@ class BaseBody:
 
     def __init__(self, scr, angle=0.0, m=M_EARTH,
                  r_own=R_OWN_EARTH, r_circulation=R_CIRCULATION_EARTH, color=BLUE,
-                 k_own=K_OWN, k_circulation=K_CIRCULATION, time=TIME, v=0):
+                 k_own=K_OWN, k_circulation=K_CIRCULATION, v=0):
         """ Конструктор класса BaseBody
         Args:
         v - полная орбитальная скорость объекта
@@ -43,8 +41,9 @@ class BaseBody:
         ay - начальное ускорение тела по вертикали
         """
         self.screen = scr
-        self.r_own, self.k_own, self.k_circulation, self.time = r_own, k_own, k_circulation, time
+        self.r_own, self.k_own, self.k_circulation = r_own, k_own, k_circulation
         self.color, self.r_circulation = color, r_circulation
+        self.time = 0
         if v == 0:
             v = math.sqrt(G * M_SUN / r_circulation)
         self.vx, self.vy = -1 * v * math.sin(angle), v * math.cos(angle)
@@ -109,8 +108,8 @@ class Planet(BaseBody):
     """
     def __init__(self, scr, angle=0.0, m=M_EARTH,
                  r_own=R_OWN_EARTH, r_circulation=R_CIRCULATION_EARTH, color=BLUE,
-                 k_own=K_OWN, k_circulation=K_CIRCULATION, time=TIME, v=0):
-        super().__init__(scr, angle, m, r_own, r_circulation, color, k_own, k_circulation, time, v)
+                 k_own=K_OWN, k_circulation=K_CIRCULATION, v=0):
+        super().__init__(scr, angle, m, r_own, r_circulation, color, k_own, k_circulation, v)
         self.auto_zoomer = False
         self.distance_from_voyager_2 = 10**22
 
@@ -162,13 +161,15 @@ class Voyager(BaseBody):
                           str(round(math.sqrt((self.x - Sun.x) ** 2 +
                                               (self.y - Sun.y) ** 2) / R_CIRCULATION_EARTH, 2)) + ' а.е.',
                           1, (255, 255, 255))
+        text4 = f1.render(str(self.k_circulation / 1000) + 'м', 1, (255, 255, 255))
         screen.blit(text1, (15, 15))
         screen.blit(text2, (15, 50))
         screen.blit(text3, (15, 85))
+        screen.blit(text4, (15, 505))
 
     def memorize_vt(self):
         self.memoryV.append((self.vx**2+self.vy**2)**0.5/1000)
-        self.memoryT.append(dt/(24*3600)+self.memoryT[-1])
+        self.memoryT.append(dt / (24 * 3600) + self.memoryT[-1])
 
 
 class Star:
@@ -289,19 +290,15 @@ def auto_zoom(planet, change_radius=True, make_little=False):
             planet.r_own *= 0.82
         if voyager.r_own > 0.5:
             voyager.r_own *= 0.82
-        if TIME > 10 ** 3:
-            TIME = int(TIME * 0.75)
-            dt = int(dt * 0.75)
     else:
         if K_CIRCULATION > K_CIRCULATION_START and change_radius:
             change_size(auto_little=True)
+        elif K_CIRCULATION <= K_CIRCULATION_START:
+            TIME = 288 * 10 ** 3
         if planet.r_own < R_OWN_EARTH:
             planet.r_own /= 0.82
         if voyager.r_own < 100:
             voyager.r_own /= 0.82
-        if TIME < 288 * 10 ** 3:
-            TIME = int(TIME / 0.75)
-            dt = int(dt / 0.75)
 
 
 def change_time():
@@ -322,25 +319,25 @@ clock = pygame.time.Clock()
 Sun = Star(screen, k_own=K_OWN / 5)
 # Инициализация планет солнечной системы
 Mercury = Planet(screen, m=3.3 * 10 ** 23, r_circulation=0.387 * R_CIRCULATION_EARTH,
-                 time=TIME, angle=1.4, color=(188, 143, 143))
-Venus = Planet(screen, m=4.87 * 10 ** 24, r_circulation=0.723 * R_CIRCULATION_EARTH,
-               time=TIME, angle=1.2, color=(245, 222, 179))
+                 angle=1.4, color=(188, 143, 143))
+Venus = Planet(screen, m=4.869 * 10 ** 24, r_circulation=0.723 * R_CIRCULATION_EARTH,
+               angle=1.2, color=(245, 222, 179))
 Earth = Planet(screen, color=(0, 0, 205))
-Mars = Planet(screen, m=6.39 * 10 ** 23, r_circulation=1.523 * R_CIRCULATION_EARTH,
-              time=TIME, angle=1.0, color=(205, 133, 63))
-Jupiter = Planet(screen, m=1.898 * 10 ** 27, r_circulation=5.203 * R_CIRCULATION_EARTH,
-                 time=TIME, angle=4.5775, color=(210, 105, 30))
-Saturn = Planet(screen, m=5.683 * 10 ** 26, r_circulation=9.555 * R_CIRCULATION_EARTH,
-                time=TIME, angle=0.6, color=(222, 184, 135))
-Uranus = Planet(screen, m=8.681 * 10 ** 25, r_circulation=19.22 * R_CIRCULATION_EARTH,
-                time=TIME, angle=4, color=(135, 206, 250))
+Mars = Planet(screen, m=6.419 * 10 ** 23, r_circulation=1.523 * R_CIRCULATION_EARTH,
+              angle=5.65625, color=(205, 133, 63))
+Jupiter = Planet(screen, m=1.899 * 10 ** 27, r_circulation=5.203 * R_CIRCULATION_EARTH,
+                 angle=4.511, color=(210, 105, 30))
+Saturn = Planet(screen, m=5.685 * 10 ** 26, r_circulation=9.555 * R_CIRCULATION_EARTH,
+                angle=3.80045, color=(222, 184, 135))
+Uranus = Planet(screen, m=8.685 * 10 ** 25, r_circulation=19.22 * R_CIRCULATION_EARTH,
+                angle=3.1583086, color=(135, 206, 250))
 Neptune = Planet(screen, m=1.024 * 10 ** 26, r_circulation=30.11 * R_CIRCULATION_EARTH,
-                 time=TIME, angle=1, color=(65, 105, 225))
+                 angle=2.85, color=(65, 105, 225))
 # список из всех планет
 Planets = [Mercury, Venus, Earth, Mars, Jupiter, Saturn, Uranus, Neptune]
 
 # Инициализация объекта, совершающего гравитационный манёвр
-voyager = Voyager(screen, color=WHITE, angle=0.01, r_own=100, k_own=K_OWN * 10 ** 4 * 5, v=42000)
+voyager = Voyager(screen, color=WHITE, angle=-0.01, r_own=100, k_own=K_OWN * 10 ** 4 * 5, v=40300)
 
 # Список всех тел, чей трек мы хотим видеть (!ВАЖНО если это будет новый класс, у него должны быть
 # self.object_track_X = [] self.object_track_Y = [])
@@ -389,13 +386,17 @@ while not finished:
         change_size()
 
     for item in Track_list[4:]:
-        if (item.x - voyager.x) ** 2 + (item.y - voyager.y) ** 2 < 7.5 * 10 ** 21:
+        if (item.x - voyager.x) ** 2 + (item.y - voyager.y) ** 2 < 10 ** 21:
             s = (item.x - voyager.x) ** 2 + (item.y - voyager.y) ** 2
-            if (item.distance_from_voyager_2 > s) and s < 5 * 10 ** 20:
+            if (item.distance_from_voyager_2 > s) and s < 10 ** 20:
+                TIME = 3 * 10 ** 3
                 auto_zoom(item)
             elif (item.distance_from_voyager_2 < s) and s < 10 ** 19:
                 auto_zoom(item)
-            elif (item.distance_from_voyager_2 < s) and s > 10 ** 19:
+            elif (item.distance_from_voyager_2 < s) and 2 * 10 ** 19 > s > 10 ** 19 and item.auto_zoomer:
+                auto_zoom(item, make_little=True)
+            elif (item.distance_from_voyager_2 < s) and s > 2 * 10 ** 19:
+                TIME = 288 * 10 ** 3
                 auto_zoom(item, make_little=True)
             item.distance_from_voyager_2 = s
     change_time()
