@@ -283,30 +283,21 @@ def auto_zoom(planet, change_radius=True, make_little=False):
             elem.object_track_Y[i] += delta_y
     Sun.y += delta_y
     if not make_little:
-        if (1 / K_CIRCULATION > 10 ** 7 and change_radius and
-                (150 < voyager.x * voyager.k_circulation < WIDTH - 150 and
-                 150 < voyager.y * voyager.k_circulation < HEIGHT - 150)):
+        if 1 / K_CIRCULATION > 10 ** 7 and change_radius:
             change_size(auto_bigger=True)
-        if (50 > voyager.x * voyager.k_circulation or voyager.x * voyager.k_circulation > WIDTH - 100 or
-                50 > voyager.y * voyager.k_circulation or voyager.y * voyager.k_circulation > HEIGHT - 100):
-            change_size(auto_little=True)
-        if planet.r_own * planet.k_own > 5:
-            planet.k_own *= 0.82
-        if voyager.r_own * voyager.k_own > 5:
-            voyager.k_own *= 0.82
-        if TIME > 10 ** 3:
-            TIME = int(TIME * 0.75)
-            dt = int(dt * 0.75)
+        if planet.r_own > 25000:
+            planet.r_own *= 0.82
+        if voyager.r_own > 0.5:
+            voyager.r_own *= 0.82
     else:
         if K_CIRCULATION > K_CIRCULATION_START and change_radius:
             change_size(auto_little=True)
-        if planet.r_own * planet.k_own < 2:
-            planet.k_own /= 0.82
-        if voyager.r_own * voyager.k_own < 2:
-            voyager.k_own /= 0.82
-        if TIME < 288 * 10 ** 3:
-            TIME = int(TIME / 0.75)
-            dt = int(dt / 0.75)
+        elif K_CIRCULATION <= K_CIRCULATION_START:
+            TIME = 288 * 10 ** 3
+        if planet.r_own < R_OWN_EARTH:
+            planet.r_own /= 0.82
+        if voyager.r_own < 100:
+            voyager.r_own /= 0.82
 
 
 def change_time():
@@ -394,13 +385,17 @@ while not finished:
         change_size()
 
     for item in Track_list[4:]:
-        if (item.x - voyager.x) ** 2 + (item.y - voyager.y) ** 2 < 7 * 10 ** 21:
+        if (item.x - voyager.x) ** 2 + (item.y - voyager.y) ** 2 < 10 ** 21:
             s = (item.x - voyager.x) ** 2 + (item.y - voyager.y) ** 2
-            if (item.distance_from_voyager_2 > s) and s < 5 * 10 ** 20:
+            if (item.distance_from_voyager_2 > s) and s < 10 ** 20:
+                TIME = 3 * 10**3
                 auto_zoom(item)
             elif (item.distance_from_voyager_2 < s) and s < 10 ** 19:
                 auto_zoom(item)
-            elif (item.distance_from_voyager_2 < s) and s > 10 ** 19 and item.auto_zoomer:
+            elif (item.distance_from_voyager_2 < s) and 2 * 10 ** 19 > s > 10 ** 19 and item.auto_zoomer:
+                auto_zoom(item, make_little=True)
+            elif (item.distance_from_voyager_2 < s) and s > 2 * 10 ** 19:
+                TIME = 288 * 10**3
                 auto_zoom(item, make_little=True)
             item.distance_from_voyager_2 = s
     change_time()
