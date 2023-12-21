@@ -394,22 +394,21 @@ while not finished:
         if (item.x - voyager.x) ** 2 + (item.y - voyager.y) ** 2 < 10 ** 21:
             s = (item.x - voyager.x) ** 2 + (item.y - voyager.y) ** 2
             if (item.distance_from_voyager_2 > s) and 10 ** 17 < s < 10 ** 20:
-                TIME = 2 * 10 ** 3
+                TIME = 25 * 10 ** 2
                 auto_zoom(item)
             elif s < 10 ** 17 + 1:
                 TIME = 500
-                auto_zoom(item, k_circulation_special=1/10**6 * 2)
+                auto_zoom(item, k_circulation_special=1 / 10 ** 6 * 2)
             elif (item.distance_from_voyager_2 < s) and 10 ** 17 < s < 10 ** 19:
-                TIME = 2 * 10 ** 3
+                TIME = 25 * 10 ** 2
                 auto_zoom(item)
             elif (item.distance_from_voyager_2 < s) and 2 * 10 ** 19 > s > 10 ** 19 and item.auto_zoomer:
-                TIME = 2 * 10 ** 3
+                TIME = 25 * 10 ** 2
                 auto_zoom(item, make_little=True)
             elif (item.distance_from_voyager_2 < s) and s > 2 * 10 ** 19:
                 TIME = 288 * 10 ** 3
                 auto_zoom(item, make_little=True)
             item.distance_from_voyager_2 = s
-            print(TIME)
     change_time()
     pygame.display.update()
 
