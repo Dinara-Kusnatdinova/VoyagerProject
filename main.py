@@ -50,7 +50,7 @@ class BaseBody:
         self.m = m
         self.x, self.y = Sun.x + self.r_circulation * math.cos(angle), Sun.y + self.r_circulation * math.sin(angle)
         self.angle = angle
-        self.ax, self.ay = 0, 0
+        self.__ax, self.__ay = 0, 0
         self.acceleration()
         self.tick = 0  # переменная для подсчёта количество выполненных циклов и перевод их в дни и годы
         self.object_track_X = []
@@ -61,8 +61,8 @@ class BaseBody:
     def acceleration(self):
         a_sun_acceleration = G * M_SUN / ((self.x - Sun.x) ** 2 + (self.y - Sun.y) ** 2)
         self.angle = math.atan2(self.y - Sun.y, self.x - Sun.x)
-        self.ax = -1 * a_sun_acceleration * math.cos(self.angle)
-        self.ay = -1 * a_sun_acceleration * math.sin(self.angle)
+        self.__ax = -1 * a_sun_acceleration * math.cos(self.angle)
+        self.__ay = -1 * a_sun_acceleration * math.sin(self.angle)
 
     def move(self):
         """Перемещает тело по прошествии единицы времени.
@@ -71,8 +71,8 @@ class BaseBody:
         self.x и self.y с учетом скоростей self.vx и self.vy.
         """
         self.acceleration()
-        self.vx -= self.ax * dt
-        self.vy -= self.ay * dt
+        self.vx -= self.__ax * dt
+        self.vy -= self.__ay * dt
         self.x -= self.vx * dt
         self.y -= self.vy * dt
 
@@ -121,21 +121,21 @@ class Voyager(BaseBody):
 
     def move(self):
         self.acceleration()
-        self.vx -= self.ax * dt
-        self.vy -= self.ay * dt
+        self.vx -= self.__ax * dt
+        self.vy -= self.__ay * dt
         self.x -= self.vx * dt
         self.y -= self.vy * dt
 
     def acceleration(self):
         a_sun_perpendicular = G * M_SUN / ((self.x - Sun.x) ** 2 + (self.y - Sun.y) ** 2)
         self.angle = math.atan2(self.y - Sun.y, self.x - Sun.x)
-        self.ax = -1 * a_sun_perpendicular * math.cos(self.angle)
-        self.ay = -1 * a_sun_perpendicular * math.sin(self.angle)
+        self.__ax = -1 * a_sun_perpendicular * math.cos(self.angle)
+        self.__ay = -1 * a_sun_perpendicular * math.sin(self.angle)
         for planet in Planets:
-            self.ax += (G * planet.m / (math.sqrt((planet.x - self.x) ** 2 + (planet.y - self.y) ** 2)) ** 3 *
-                        (planet.x - self.x))
-            self.ay += (G * planet.m / (math.sqrt((planet.x - self.x) ** 2 + (planet.y - self.y) ** 2)) ** 3 *
-                        (planet.y - self.y))
+            self.__ax += (G * planet.m / (math.sqrt((planet.x - self.x) ** 2 + (planet.y - self.y) ** 2)) ** 3 *
+                          (planet.x - self.x))
+            self.__ay += (G * planet.m / (math.sqrt((planet.x - self.x) ** 2 + (planet.y - self.y) ** 2)) ** 3 *
+                          (planet.y - self.y))
 
     def draw_information(self):
         self.time += TIME
@@ -271,7 +271,7 @@ def change_size(k=1.25, auto_little=False, auto_bigger=False):
         Sun.y -= HEIGHT * 0.125 / K_CIRCULATION
 
 
-def auto_zoom(planet, change_radius=True, make_little=False):
+def auto_zoom(planet, change_radius=True, make_little=False, k_circulation_special=1/10 ** 7 / 1.25):
     global TIME, dt
     planet.auto_zoomer = True
     delta_x = (WIDTH / 2) / K_CIRCULATION - planet.x
@@ -287,21 +287,23 @@ def auto_zoom(planet, change_radius=True, make_little=False):
             elem.object_track_Y[i] += delta_y
     Sun.y += delta_y
     if not make_little:
-        if 1 / K_CIRCULATION > 10 ** 7 and change_radius:
+        if 1 / K_CIRCULATION > 1/k_circulation_special and change_radius:
             change_size(auto_bigger=True)
-        if planet.r_own > 25000:
-            planet.r_own *= 0.82
-        if voyager.r_own > 0.5:
-            voyager.r_own *= 0.82
-    else:
+        if 1 / K_CIRCULATION / 1.25 < 1/k_circulation_special:
+            make_little = True
+        if planet.r_own * planet.k_own > 4:
+            planet.k_own *= 0.8
+        if voyager.r_own * voyager.k_own > 4:
+            voyager.k_own *= 0.8
+    if make_little:
         if K_CIRCULATION > K_CIRCULATION_START and change_radius:
             change_size(auto_little=True)
         elif K_CIRCULATION <= K_CIRCULATION_START:
             TIME = 288 * 10 ** 3
-        if planet.r_own < R_OWN_EARTH:
-            planet.r_own /= 0.82
-        if voyager.r_own < 100:
-            voyager.r_own /= 0.82
+        if planet.r_own * planet.k_own < 2:
+            planet.k_own /= 0.8
+        if voyager.r_own * voyager.k_own < 2:
+            voyager.k_own /= 0.8
 
 
 def change_time():
@@ -391,17 +393,23 @@ while not finished:
     for item in Track_list[4:]:
         if (item.x - voyager.x) ** 2 + (item.y - voyager.y) ** 2 < 10 ** 21:
             s = (item.x - voyager.x) ** 2 + (item.y - voyager.y) ** 2
-            if (item.distance_from_voyager_2 > s) and s < 10 ** 20:
-                TIME = 3 * 10 ** 3
+            if (item.distance_from_voyager_2 > s) and 10 ** 17 < s < 10 ** 20:
+                TIME = 2 * 10 ** 3
                 auto_zoom(item)
-            elif (item.distance_from_voyager_2 < s) and s < 10 ** 19:
+            elif s < 10 ** 17 + 1:
+                TIME = 500
+                auto_zoom(item, k_circulation_special=1/10**6 * 2)
+            elif (item.distance_from_voyager_2 < s) and 10 ** 17 < s < 10 ** 19:
+                TIME = 2 * 10 ** 3
                 auto_zoom(item)
             elif (item.distance_from_voyager_2 < s) and 2 * 10 ** 19 > s > 10 ** 19 and item.auto_zoomer:
+                TIME = 2 * 10 ** 3
                 auto_zoom(item, make_little=True)
             elif (item.distance_from_voyager_2 < s) and s > 2 * 10 ** 19:
                 TIME = 288 * 10 ** 3
                 auto_zoom(item, make_little=True)
             item.distance_from_voyager_2 = s
+            print(TIME)
     change_time()
     pygame.display.update()
 
