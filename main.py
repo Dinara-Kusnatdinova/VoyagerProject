@@ -405,7 +405,7 @@ while not finished:
             elif (item.distance_from_voyager_2 < s) and 2 * 10 ** 19 > s > 10 ** 19 and item.auto_zoomer:
                 TIME = 25 * 10 ** 2
                 auto_zoom(item, make_little=True)
-            elif (item.distance_from_voyager_2 < s) and s > 2 * 10 ** 19:
+            elif (item.distance_from_voyager_2 < s) and s > 2 * 10 ** 19 and item.auto_zoomer:
                 TIME = 288 * 10 ** 3
                 auto_zoom(item, make_little=True)
             item.distance_from_voyager_2 = s
